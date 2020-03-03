@@ -1,0 +1,27 @@
+package org.attnetwork.crypto;
+
+import java.security.KeyPair;
+import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
+import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
+
+public class ECKeyPair {
+  private BCECPrivateKey privateKey;
+  private BCECPublicKey publicKey;
+
+  ECKeyPair(KeyPair keyPair) {
+    this((BCECPrivateKey) keyPair.getPrivate(), (BCECPublicKey) keyPair.getPublic());
+  }
+
+  ECKeyPair(BCECPrivateKey privateKey, BCECPublicKey publicKey) {
+    this.privateKey = privateKey;
+    this.publicKey = publicKey;
+  }
+
+  public BCECPrivateKey getPrivateKey() {
+    return privateKey;
+  }
+
+  public BCECPublicKey getPublicKey() {
+    return publicKey;
+  }
+}
