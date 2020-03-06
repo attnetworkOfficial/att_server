@@ -3,10 +3,14 @@ package org.attnetwork.proto.sl;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.List;
 import org.attnetwork.exception.AException;
+import org.attnetwork.utils.ReflectUtil;
 
 class Writer {
   private final ByteArrayOutputStream cache;
@@ -35,7 +39,7 @@ class Writer {
 
   //---------------------------
 
-  private void write(Object value) throws IOException {
+  private void write(Object value, Field field) throws IOException {
     if (value == null) {
       writeVarInt(cache, 0);
       return;
@@ -43,6 +47,8 @@ class Writer {
     Class type = value.getClass();
     if (AbstractMsg.class.isAssignableFrom(type)) {
       writeMessage(cache, (AbstractMsg) value);
+    } else if (List.class.isAssignableFrom(type)) {
+      writeArray(cache, ReflectUtil.listToArray((List<?>) value, ReflectUtil.getFieldGenericType(field, 0)));
     } else if (type.isArray()) {
       if (type.getSimpleName().equals("byte[]")) {
         writeLengthData(cache, (byte[]) value);
@@ -61,7 +67,7 @@ class Writer {
     }
     Field[] fields = value.getClass().getFields();
     for (Field field : fields) {
-      write(field.get(value));
+      write(field.get(value), field);
     }
     writeLengthData(os, cache.toByteArray());
   }
@@ -77,15 +83,9 @@ class Writer {
       return;
     }
     for (Object o : array) {
-      write(o);
+      write(o, null);
     }
-    writeLengthCountData(os, array.length, cache.toByteArray());
-  }
-
-  private static void writeLengthCountData(OutputStream os, int count, byte[] data) throws IOException {
-    writeVarInt(os, data.length);
-    writeVarInt(os, count);
-    os.write(data);
+    writeLengthData(os, cache.toByteArray());
   }
 
   private static void writeLengthData(OutputStream os, byte[] data) throws IOException {
@@ -113,8 +113,8 @@ class Writer {
   private static byte[] toByteArray(BigDecimal value) throws IOException {
     ByteArrayOutputStream cache = new ByteArrayOutputStream();
     int scale = value.stripTrailingZeros().scale();
-    writeLengthData(cache, BigInteger.valueOf(scale).toByteArray());
     writeLengthData(cache, (scale == 0 ? value : value.movePointRight(scale)).toBigInteger().toByteArray());
+    cache.write(BigInteger.valueOf(scale).toByteArray());
     return cache.toByteArray();
   }
 
@@ -133,18 +133,5 @@ class Writer {
       os.write((varInt >> 7) & 0x7F | 0x80);
     }
     os.write((varInt) & 0x7F);
-  }
-
-  private static int varIntLength(int varInt) {
-    if (varInt >= 0x80) {
-      if (varInt >= 0x4000) {
-        if (varInt >= 0x200000) {
-          return 4;
-        }
-        return 3;
-      }
-      return 2;
-    }
-    return 1;
   }
 }

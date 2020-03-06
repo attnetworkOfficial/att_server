@@ -9,10 +9,13 @@ import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 
 class ECCryptoTest {
-  private static ECCrypto ecc = ECCrypto.instance();
+  private Logger logger = LoggerFactory.getLogger(getClass());
+  private ECCrypto ecc = ECCrypto.instance();
 
   @Test
   void testGeneratePrivateKey() {
@@ -45,14 +48,16 @@ class ECCryptoTest {
       BCECPrivateKey privateKey = pair.getPrivateKey();
       BCECPublicKey publicKey = pair.getPublicKey();
       byte[] data = HashUtil.sha256(("asdfafds" + i).getBytes());
+      String info = "prv: " + privateKey.getD().toString(16) +
+                    "\ndata: " + ByteUtils.toHexString(data);
       BigInteger[] sign = ecc.sign(privateKey.getD(), data);
       boolean verify = ecc.verify(publicKey.getQ(), sign, data);
-      Assert.isTrue(verify, "verify ecc sign fail");
+      Assert.isTrue(verify, "verify ecc sign fail\n" + info);
       int v = ecc.generateSignV(publicKey.getQ(), sign, data);
       verify = ecc.verify(v, sign, data);
-      Assert.isTrue(verify, "verify ecc from recovery public key fail");
+      Assert.isTrue(verify, "verify ecc from recovery public key fail\n" + info);
       countDownLatch.countDown();
     }
-    System.out.println("test sign verify finish");
+    logger.trace("test sign verify finish");
   }
 }
