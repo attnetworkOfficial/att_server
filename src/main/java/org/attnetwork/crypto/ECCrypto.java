@@ -1,10 +1,17 @@
 package org.attnetwork.crypto;
 
 import java.math.BigInteger;
+import java.security.Key;
 import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.Security;
+import java.security.Signature;
 import java.security.spec.ECGenParameterSpec;
 import java.util.Arrays;
+import javax.crypto.Cipher;
+import org.attnetwork.exception.AException;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.asn1.x9.X9IntegerConverter;
@@ -26,26 +33,92 @@ import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 
-public class ECCrypto {
+public class ECCrypto implements EncryptAsymmetric {
   private final String algorithm;
-  private final String name;
+  private final String paramName;
+  private final String provider;
 
   private final ECParameterSpec ecParameterSpec;
   private final ECDomainParameters ecDomainParameters;
+  private final Signature signature;
 
-  public static ECCrypto instance() {
-    return new ECCrypto("EC", "secp256k1");
+  static {
+    Security.addProvider(new BouncyCastleProvider());
   }
 
-  private ECCrypto(String algorithm, String name) {
+  public static ECCrypto instance() {
+    return new ECCrypto("EC", "secp256k1", BouncyCastleProvider.PROVIDER_NAME);
+  }
+
+  private ECCrypto(String algorithm, String paramName, String provider) {
     this.algorithm = algorithm;
-    this.name = name;
-    X9ECParameters p = SECNamedCurves.getByName(name);
+    this.paramName = paramName;
+    this.provider = provider;
+
+    X9ECParameters p = SECNamedCurves.getByName(paramName);
     this.ecDomainParameters = new ECDomainParameters(p.getCurve(), p.getG(), p.getN(), p.getH());
-    this.ecParameterSpec = ECNamedCurveTable.getParameterSpec(name);
+    this.ecParameterSpec = ECNamedCurveTable.getParameterSpec(paramName);
+
+    try {
+      this.signature = Signature.getInstance("SHA256withECDSA", provider);
+    } catch (Exception e) {
+      throw new AException(e);
+    }
 //    this.HALF_CURVE_ORDER = p.getN().shiftRight(1);
   }
 
+  public byte[] encrypt(Key key, byte[] data) {
+    try {
+      Cipher cipher = Cipher.getInstance("ECIES", provider);
+      cipher.init(Cipher.ENCRYPT_MODE, key);
+      return cipher.doFinal(data);
+    } catch (Exception e) {
+      throw new AException(e);
+    }
+  }
+
+  public byte[] decrypt(Key key, byte[] data) {
+    try {
+      Cipher cipher = Cipher.getInstance("ECIES", provider);
+      cipher.init(Cipher.DECRYPT_MODE, key);
+      return cipher.doFinal(data);
+    } catch (Exception e) {
+      throw new AException(e);
+    }
+  }
+
+  public String getAsymmetricAlgorithm() {
+    return algorithm;
+  }
+
+  public byte[] sign(PrivateKey privateKey, byte[] data) {
+    synchronized (signature) {
+      try {
+        signature.initSign(privateKey);
+        signature.update(data);
+        return signature.sign();
+      } catch (Exception e) {
+        throw new AException(e);
+      }
+    }
+  }
+
+  public boolean verify(PublicKey publicKey, byte[] sign, byte[] data) {
+    synchronized (signature) {
+      try {
+        signature.initVerify(publicKey);
+        signature.update(data);
+        return signature.verify(sign);
+      } catch (Exception e) {
+        throw new AException(e);
+      }
+    }
+  }
+
+  public byte[] derivePublicKey(PrivateKey privateKey) {
+    ECKeyPair ecKeyPair = restoreKeyPair((BCECPrivateKey) privateKey);
+    return ecKeyPair.getPublicKey().getQ().getEncoded(true);
+  }
 
   public BigInteger[] sign(BigInteger privateKey, byte[] data) {
     ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()));
@@ -122,8 +195,8 @@ public class ECCrypto {
 
   public ECKeyPair generateKeyPair() {
     try {
-      KeyPairGenerator generator = KeyPairGenerator.getInstance(algorithm, new BouncyCastleProvider());
-      generator.initialize(new ECGenParameterSpec(name), new SecureRandom());
+      KeyPairGenerator generator = KeyPairGenerator.getInstance(algorithm, provider);
+      generator.initialize(new ECGenParameterSpec(paramName), new SecureRandom());
       return new ECKeyPair(generator.generateKeyPair());
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -131,7 +204,10 @@ public class ECCrypto {
   }
 
   public ECKeyPair restoreKeyPair(String hexString) {
-    BCECPrivateKey privateKey = restorePrivateKey(hexString);
+    return restoreKeyPair(restorePrivateKey(hexString));
+  }
+
+  public ECKeyPair restoreKeyPair(BCECPrivateKey privateKey) {
     return new ECKeyPair(privateKey, restorePublicKey(ecParameterSpec.getG().multiply(privateKey.getD())));
   }
 

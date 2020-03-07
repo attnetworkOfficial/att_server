@@ -4,26 +4,30 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.List;
 import org.attnetwork.exception.AException;
+import org.attnetwork.utils.BitmapFlags;
 import org.attnetwork.utils.ReflectUtil;
 
-class Reader {
-  private int index;
-  private int length;
+class SeqLanObjReader {
 
-  private final byte[] raw;
-
-  static <T extends AbstractMsg> T read(byte[] raw, Class<T> msgType) {
+  static <T extends AbstractSeqLanObject> T read(byte[] raw, Class<T> msgType, int readFieldLimits) {
     try {
-      return new Reader(raw).read(msgType, null);
+      return new SeqLanObjReader(raw, readFieldLimits).read(msgType, null);
     } catch (IllegalAccessException | InstantiationException e) {
       throw new AException(e);
     }
   }
 
-  private Reader(byte[] raw) {
+  private int index;
+  private int length;
+  private int fields;
+
+  private final byte[] raw;
+  private final int readFieldLimits;
+
+  private SeqLanObjReader(byte[] raw, int readFieldLimits) {
     this.raw = raw;
+    this.readFieldLimits = readFieldLimits;
   }
 
   private <T> T read(Class<T> type, Field field) throws IllegalAccessException, InstantiationException {
@@ -41,20 +45,40 @@ class Reader {
 
   @SuppressWarnings("unchecked")
   private <T> T readCurrentObject(Class<T> type, Field field) throws InstantiationException, IllegalAccessException {
-    if (AbstractMsg.class.isAssignableFrom(type)) {
-      return readMessage(type);
-    } else if (List.class.equals(type)) {
-      if (field == null) {
-        throw new IllegalArgumentException("Type List<List<?>> is not supported now");
-      }
-      return (T) readList(ReflectUtil.getFieldGenericType(field, 0));
-    } else if (type.isArray()) {
-      return readArray(type);
-    } else {
-      return (T) readSimpleObject(type);
+    if (fields++ > readFieldLimits) {
+      return null;
+    }
+    switch (SeqLanDataType.getClassType(type)) {
+      case OBJECT:
+        return readMessage(type);
+      case ARRAY: // unknown array length, read as list first
+        return (T) ReflectUtil.listToArray(readList(type.getComponentType()), type.getComponentType());
+      case LIST:
+        if (field == null) {
+          throw new IllegalArgumentException("Type List<List<?>> is not supported now");
+        }
+        return (T) readList(ReflectUtil.getFieldGenericType(field, 0));
+      // simple data
+      case RAW:
+        return (T) readRaw();
+      case BITMAP_FLAGS:
+        return (T) BitmapFlags.load((Class<Enum>) ReflectUtil.getFieldGenericType(field, 0), readRaw());
+      case INTEGER:
+        return (T) (Integer) readBigInteger().intValueExact();
+      case LONG:
+        return (T) (Long) readBigInteger().longValueExact();
+      case BIG_INTEGER:
+        return (T) readBigInteger();
+      case BIG_DECIMAL:
+        return (T) readBigDecimal();
+      case STRING:
+        return (T) new String(raw, index, length);
+      default:
+        throw new IllegalArgumentException("unsupported class: " + type.getSimpleName());
     }
   }
 
+  // object and list
   private <T> T readMessage(Class<T> type) throws IllegalAccessException, InstantiationException {
     Field[] fields = type.getFields();
     T msg = type.newInstance();
@@ -78,32 +102,11 @@ class Reader {
     return list;
   }
 
-  @SuppressWarnings("unchecked")
-  private <T> T readArray(Class<T> type) throws InstantiationException, IllegalAccessException {
-    if ("byte[]".equals(type.getSimpleName())) {
-      byte[] data = new byte[length];
-      System.arraycopy(raw, index, data, 0, length);
-      return (T) data;
-    } else {
-      return (T) ReflectUtil.listToArray(readList(type.getComponentType()), type.getComponentType());
-    }
-  }
-
-  private Object readSimpleObject(Class<?> type) {
-    switch (type.getSimpleName()) {
-      case "Integer":
-        return readBigInteger().intValueExact();
-      case "Long":
-        return readBigInteger().longValueExact();
-      case "BigInteger":
-        return readBigInteger();
-      case "BigDecimal":
-        return readBigDecimal();
-      case "String":
-        return new String(raw, index, length);
-      default:
-        throw new IllegalArgumentException("unsupported class: " + type.getSimpleName());
-    }
+  // simple data
+  private byte[] readRaw() {
+    byte[] data = new byte[length];
+    System.arraycopy(raw, index, data, 0, length);
+    return data;
   }
 
   private BigInteger readBigInteger() {
@@ -121,6 +124,7 @@ class Reader {
     return new BigDecimal(value, readBigInteger().intValueExact());
   }
 
+  // length
   private void readLength() {
     length = raw[index] & 0x7F;
     while ((raw[index++] >>> 7) > 0) {

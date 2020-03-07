@@ -1,12 +1,7 @@
 package org.attnetwork.proto.msg;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import org.attnetwork.proto.sl.AbstractMsg;
+import org.attnetwork.proto.sl.AbstractSeqLanObject;
 
-public class HelloMsg extends AbstractMsg {
-  public Integer a;
-  public Long b;
-  public BigInteger[] sign;
-  public BigDecimal decimal;
+public class HelloMsg extends AbstractSeqLanObject {
+  public byte[] random;
 }

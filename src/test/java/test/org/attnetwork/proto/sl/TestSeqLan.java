@@ -1,8 +1,9 @@
 package test.org.attnetwork.proto.sl;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
-import org.attnetwork.proto.sl.AbstractMsg;
+import org.attnetwork.proto.sl.AbstractSeqLanObject;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -15,7 +16,7 @@ class TestSeqLan {
   private Logger logger = LoggerFactory.getLogger(getClass());
 
   @Test
-  void testExampleMsg() {
+  void testExampleMsg() throws IOException {
     ExampleUserMsg user = new ExampleUserMsg();
     user.id = 11099822739479112L;
     user.firstName = "John";
@@ -30,22 +31,21 @@ class TestSeqLan {
     contact2.id = 45405687374639045L;
     user.contacts = new ExampleUserContactMsg[]{contact1, contact2};
 
+    String rawHex = "4007276f3adf74da48044a6f686e05536d69746804023220020c3430302d3232322d353535351a0e08008d76253ac3e13704626f73730a0800a1503b6abf6fc500";
 
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     user.write(os);
     byte[] rawA = os.toByteArray();
-    logger.debug("A: {}", ByteUtils.toHexString(rawA));
+    Assert.isTrue(ByteUtils.equals(rawA, ByteUtils.fromHexString(rawHex)),
+                  "rawA should equals rawHex\nA: " + ByteUtils.toHexString(rawA) + "\nR: " + rawHex);
 
-    ExampleUserMsg msgB = AbstractMsg.read(rawA, ExampleUserMsg.class);
+    ExampleUserMsg msgB = AbstractSeqLanObject.read(rawA, ExampleUserMsg.class);
     os = new ByteArrayOutputStream();
     msgB.write(os);
     byte[] rawB = os.toByteArray();
-    logger.debug("B: {}", ByteUtils.toHexString(rawB));
 
-    Assert.isTrue(ByteUtils.equals(rawA, rawB),
-                  "recovery raw message error\nA: " +
-                  ByteUtils.toHexString(rawA) + "\nB: " +
-                  ByteUtils.toHexString(rawB));
+    Assert.isTrue(ByteUtils.equals(rawB, ByteUtils.fromHexString(rawHex)),
+                  "rawB should equals rawHex\nB: " + ByteUtils.toHexString(rawA) + "\nR: " + rawHex);
   }
 }
 

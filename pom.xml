@@ -14,7 +14,7 @@
   <artifactId>att_server</artifactId>
   <packaging>jar</packaging>
   <version>alpha.1.0.0</version>
-  <description>Demo project for Spring Boot</description>
+  <description>ATT Protocol Java Implementation</description>
 
 
   <properties>

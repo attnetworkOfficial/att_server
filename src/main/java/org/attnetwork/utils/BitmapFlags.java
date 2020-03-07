@@ -1,0 +1,72 @@
+package org.attnetwork.utils;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class BitmapFlags<E extends Enum<E>> {
+  private byte[] flags;
+  private Class<E> enumType;
+
+
+  public static <T extends Enum<T>> BitmapFlags<T> create(Class<T> enumType, T... flags) {
+    BitmapFlags<T> bf = load(enumType, null);
+    for (T ordinal : flags) {
+      bf.set(ordinal, true);
+    }
+    return bf;
+  }
+
+  public static <T extends Enum<T>> BitmapFlags<T> load(Class<T> enumType, byte[] flags) {
+    return new BitmapFlags<>(enumType, flags);
+  }
+
+  private BitmapFlags(Class<E> enumType, byte[] flags) {
+    this.enumType = enumType;
+    this.flags = flags;
+  }
+
+  public Boolean hasAll(E... enums) {
+    for (E e : enums) {
+      if (!has(e)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public Boolean has(E e) {
+    if (flags == null) {
+      return false;
+    }
+    int l = e.ordinal();
+    int i = l / 4;
+    return flags.length > i && ((flags[i] >> (l % 4)) & 1) == 1;
+  }
+
+  public void set(E ordinal, boolean flag) {
+    int l = ordinal.ordinal();
+    int i = l / 4;
+    if (flags == null) {
+      flags = new byte[i + 1];
+    } else if (flags.length <= i) {
+      flags = Arrays.copyOf(flags, i + 1);
+    }
+    int w = 1 << (l % 4);
+    flags[i] = (byte) (flag ? (flags[i] | w) : (flags[i] & ~w));
+  }
+
+  public byte[] getFlags() {
+    return flags;
+  }
+
+  public List<E> typeInList() {
+    List<E> list = new ArrayList<>();
+    for (E e : enumType.getEnumConstants()) {
+      if (this.has(e)) {
+        list.add(e);
+      }
+    }
+    return list;
+  }
+}
