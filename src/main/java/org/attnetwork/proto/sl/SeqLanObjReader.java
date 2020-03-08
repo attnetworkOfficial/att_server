@@ -1,5 +1,7 @@
 package org.attnetwork.proto.sl;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -10,33 +12,36 @@ import org.attnetwork.utils.ReflectUtil;
 
 class SeqLanObjReader {
 
-  static <T extends AbstractSeqLanObject> T read(byte[] raw, Class<T> msgType, int readFieldLimits) {
+  static <T extends AbstractSeqLanObject> T read(InputStream source, Class<T> msgType) throws IOException {
     try {
-      return new SeqLanObjReader(raw, readFieldLimits).read(msgType, null);
+      return wrap(source).read(msgType, null);
     } catch (IllegalAccessException | InstantiationException e) {
       throw new AException(e);
     }
   }
 
+
+  private final InputStream source;
+
+  private byte[] cache;
   private int index;
-  private int length;
-  private int fields;
+  private int nextDataLength;
 
-  private final byte[] raw;
-  private final int readFieldLimits;
-
-  private SeqLanObjReader(byte[] raw, int readFieldLimits) {
-    this.raw = raw;
-    this.readFieldLimits = readFieldLimits;
+  private static SeqLanObjReader wrap(InputStream source) {
+    return new SeqLanObjReader(source);
   }
 
-  private <T> T read(Class<T> type, Field field) throws IllegalAccessException, InstantiationException {
-    readLength();
-    if (length == 0) {
-      index++;
+  private SeqLanObjReader(InputStream source) {
+    this.source = source;
+    this.cache = new byte[128];
+  }
+
+  private <T> T read(Class<T> type, Field field) throws IllegalAccessException, InstantiationException, IOException {
+    readNextDataLength();
+    if (nextDataLength == 0) {
       return null;
     } else {
-      int next = length + index;
+      int next = nextDataLength + index;
       T obj = readCurrentObject(type, field);
       index = next;
       return obj;
@@ -44,21 +49,20 @@ class SeqLanObjReader {
   }
 
   @SuppressWarnings("unchecked")
-  private <T> T readCurrentObject(Class<T> type, Field field) throws InstantiationException, IllegalAccessException {
-    if (fields++ > readFieldLimits) {
-      return null;
-    }
-    switch (SeqLanDataType.getClassType(type)) {
+  private <T> T readCurrentObject(Class<T> type, Field field) throws InstantiationException, IllegalAccessException, IOException {
+    SeqLanDataType fieldType = SeqLanDataType.getClassType(type);
+    switch (fieldType) {
       case OBJECT:
         return readMessage(type);
-      case ARRAY: // unknown array length, read as list first
+      case ARRAY: // unknown array nextDataLength, read as list first
         return (T) ReflectUtil.listToArray(readList(type.getComponentType()), type.getComponentType());
       case LIST:
         if (field == null) {
           throw new IllegalArgumentException("Type List<List<?>> is not supported now");
         }
         return (T) readList(ReflectUtil.getFieldGenericType(field, 0));
-      // simple data
+      case BIG_DECIMAL:
+        return (T) readBigDecimal();
       case RAW:
         return (T) readRaw();
       case BITMAP_FLAGS:
@@ -69,68 +73,103 @@ class SeqLanObjReader {
         return (T) (Long) readBigInteger().longValueExact();
       case BIG_INTEGER:
         return (T) readBigInteger();
-      case BIG_DECIMAL:
-        return (T) readBigDecimal();
       case STRING:
-        return (T) new String(raw, index, length);
+        return (T) readString();
       default:
         throw new IllegalArgumentException("unsupported class: " + type.getSimpleName());
     }
   }
 
   // object and list
-  private <T> T readMessage(Class<T> type) throws IllegalAccessException, InstantiationException {
+  private <T> T readMessage(Class<T> type) throws IllegalAccessException, InstantiationException, IOException {
     Field[] fields = type.getFields();
     T msg = type.newInstance();
+    int i = 0;
     for (Field field : fields) {
+      BeforeRead beforeRead = field.getAnnotation(BeforeRead.class);
+      if (beforeRead != null) {
+        ((AbstractSeqLanObject) msg).beforeReadDo(i);
+      }
       Object value = read(field.getType(), field);
       if (value != null) {
         field.set(msg, value);
       }
+      ++i;
     }
     return msg;
   }
 
-  private <T> ArrayList<T> readList(Class<T> elementType) throws InstantiationException, IllegalAccessException {
+  private <T> ArrayList<T> readList(Class<T> elementType) throws InstantiationException, IllegalAccessException, IOException {
     ArrayList<T> list = new ArrayList<>();
-    int start = index;
-    int end = index + length;
+    int end = index + nextDataLength;
     while (end > index) {
       list.add(read(elementType, null));
     }
-    index = start;
     return list;
   }
 
-  // simple data
-  private byte[] readRaw() {
-    byte[] data = new byte[length];
-    System.arraycopy(raw, index, data, 0, length);
+  private byte[] readRaw() throws IOException {
+    byte[] data = new byte[nextDataLength];
+    readData(data);
     return data;
   }
 
-  private BigInteger readBigInteger() {
-    byte[] bytes = new byte[length];
-    System.arraycopy(raw, index, bytes, 0, length);
+  private BigInteger readBigInteger() throws IOException {
+    readDataIntoCache();
+    byte[] bytes = new byte[nextDataLength];
+    System.arraycopy(cache, 0, bytes, 0, nextDataLength);
     return new BigInteger(bytes);
   }
 
-  private BigDecimal readBigDecimal() {
-    int len = length;
-    readLength();
+  private BigDecimal readBigDecimal() throws IOException {
+    int totalLen = nextDataLength;
+    readNextDataLength();
     BigInteger value = readBigInteger();
-    index += length;
-    length = len - varIntLength(length) - length;
+    nextDataLength = totalLen - varIntLength(nextDataLength) - nextDataLength;
     return new BigDecimal(value, readBigInteger().intValueExact());
   }
 
-  // length
-  private void readLength() {
-    length = raw[index] & 0x7F;
-    while ((raw[index++] >>> 7) > 0) {
-      length = length << 7;
-      length += raw[index] & 0x7F;
+  private String readString() throws IOException {
+    readDataIntoCache();
+    return new String(cache, 0, nextDataLength);
+  }
+
+
+  private void readNextDataLength() throws IOException {
+    nextDataLength = 0;
+    int oneByte;
+    do {
+      oneByte = source.read();
+      if (oneByte < 0) {
+        throw new IOException("unexpected stream end reached");
+      }
+      ++index;
+      nextDataLength = nextDataLength << 7;
+      nextDataLength += oneByte & 0x7F;
+    } while ((oneByte >>> 7) > 0);
+  }
+
+  private void readDataIntoCache() throws IOException {
+    expandCache();
+    readData(cache);
+    index += nextDataLength;
+  }
+
+  private void readData(byte[] target) throws IOException {
+    if (source.read(target, 0, nextDataLength) < 0) {
+      throw new IOException("unexpected stream end reached");
     }
+  }
+
+  private void expandCache() {
+    int cl = cache.length;
+    while (cl < nextDataLength) {
+      cl <<= 1;
+      if (cl < 0) {
+        cl = nextDataLength;
+      }
+    }
+    cache = new byte[cl];
   }
 
   private static int varIntLength(int varInt) {

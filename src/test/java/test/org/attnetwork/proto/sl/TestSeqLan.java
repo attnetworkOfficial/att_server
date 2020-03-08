@@ -1,5 +1,6 @@
 package test.org.attnetwork.proto.sl;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -39,7 +40,7 @@ class TestSeqLan {
     Assert.isTrue(ByteUtils.equals(rawA, ByteUtils.fromHexString(rawHex)),
                   "rawA should equals rawHex\nA: " + ByteUtils.toHexString(rawA) + "\nR: " + rawHex);
 
-    ExampleUserMsg msgB = AbstractSeqLanObject.read(rawA, ExampleUserMsg.class);
+    ExampleUserMsg msgB = AbstractSeqLanObject.read(new ByteArrayInputStream(rawA), ExampleUserMsg.class);
     os = new ByteArrayOutputStream();
     msgB.write(os);
     byte[] rawB = os.toByteArray();

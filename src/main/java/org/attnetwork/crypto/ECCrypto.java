@@ -41,6 +41,7 @@ public class ECCrypto implements EncryptAsymmetric {
   private final ECParameterSpec ecParameterSpec;
   private final ECDomainParameters ecDomainParameters;
   private final Signature signature;
+  private final Cipher cipher;
 
   static {
     Security.addProvider(new BouncyCastleProvider());
@@ -61,17 +62,22 @@ public class ECCrypto implements EncryptAsymmetric {
 
     try {
       this.signature = Signature.getInstance("SHA256withECDSA", provider);
+      this.cipher = Cipher.getInstance("ECIES", provider);
     } catch (Exception e) {
       throw new AException(e);
     }
 //    this.HALF_CURVE_ORDER = p.getN().shiftRight(1);
   }
 
-  public byte[] encrypt(Key key, byte[] data) {
+  public byte[] encrypt(Key key, byte[]... data) {
     try {
-      Cipher cipher = Cipher.getInstance("ECIES", provider);
-      cipher.init(Cipher.ENCRYPT_MODE, key);
-      return cipher.doFinal(data);
+      synchronized (cipher) {
+        cipher.init(Cipher.ENCRYPT_MODE, key);
+        for (byte[] d : data) {
+          cipher.update(d);
+        }
+        return cipher.doFinal();
+      }
     } catch (Exception e) {
       throw new AException(e);
     }
@@ -79,9 +85,10 @@ public class ECCrypto implements EncryptAsymmetric {
 
   public byte[] decrypt(Key key, byte[] data) {
     try {
-      Cipher cipher = Cipher.getInstance("ECIES", provider);
-      cipher.init(Cipher.DECRYPT_MODE, key);
-      return cipher.doFinal(data);
+      synchronized (cipher) {
+        cipher.init(Cipher.DECRYPT_MODE, key);
+        return cipher.doFinal(data);
+      }
     } catch (Exception e) {
       throw new AException(e);
     }
@@ -92,26 +99,26 @@ public class ECCrypto implements EncryptAsymmetric {
   }
 
   public byte[] sign(PrivateKey privateKey, byte[] data) {
-    synchronized (signature) {
-      try {
+    try {
+      synchronized (signature) {
         signature.initSign(privateKey);
         signature.update(data);
         return signature.sign();
-      } catch (Exception e) {
-        throw new AException(e);
       }
+    } catch (Exception e) {
+      throw new AException(e);
     }
   }
 
   public boolean verify(PublicKey publicKey, byte[] sign, byte[] data) {
-    synchronized (signature) {
-      try {
+    try {
+      synchronized (signature) {
         signature.initVerify(publicKey);
         signature.update(data);
         return signature.verify(sign);
-      } catch (Exception e) {
-        throw new AException(e);
       }
+    } catch (Exception e) {
+      throw new AException(e);
     }
   }
 

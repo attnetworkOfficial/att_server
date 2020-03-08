@@ -10,8 +10,6 @@ import java.util.List;
 import org.attnetwork.exception.AException;
 
 class SeqLanObjWriter {
-  private final ByteArrayOutputStream cache;
-  private final Object value;
 
   static byte[] toByteArray(AbstractSeqLanObject msg) {
     try {
@@ -20,6 +18,9 @@ class SeqLanObjWriter {
       throw new AException(e);
     }
   }
+
+  private final ByteArrayOutputStream cache;
+  private final Object value;
 
   private SeqLanObjWriter(Object value) {
     this.cache = new ByteArrayOutputStream();
