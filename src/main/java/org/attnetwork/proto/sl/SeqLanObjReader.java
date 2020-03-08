@@ -1,21 +1,25 @@
 package org.attnetwork.proto.sl;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import org.attnetwork.exception.AException;
+import org.attnetwork.proto.sl.AbstractSeqLanObject.ProcessFieldData;
 import org.attnetwork.utils.BitmapFlags;
 import org.attnetwork.utils.ReflectUtil;
 
 class SeqLanObjReader {
 
-  static <T extends AbstractSeqLanObject> T read(InputStream source, Class<T> msgType) throws IOException {
+  static <T extends AbstractSeqLanObject> T read(InputStream source, Class<T> msgType) {
     try {
       return wrap(source).read(msgType, null);
-    } catch (IllegalAccessException | InstantiationException e) {
+    } catch (Exception e) {
       throw new AException(e);
     }
   }
@@ -27,16 +31,17 @@ class SeqLanObjReader {
   private int index;
   private int nextDataLength;
 
+
   private static SeqLanObjReader wrap(InputStream source) {
     return new SeqLanObjReader(source);
   }
 
   private SeqLanObjReader(InputStream source) {
     this.source = source;
-    this.cache = new byte[128];
+    this.cache = new byte[32];
   }
 
-  private <T> T read(Class<T> type, Field field) throws IllegalAccessException, InstantiationException, IOException {
+  private <T> T read(Class<T> type, Field field) throws Exception {
     readNextDataLength();
     if (nextDataLength == 0) {
       return null;
@@ -49,7 +54,7 @@ class SeqLanObjReader {
   }
 
   @SuppressWarnings("unchecked")
-  private <T> T readCurrentObject(Class<T> type, Field field) throws InstantiationException, IllegalAccessException, IOException {
+  private <T> T readCurrentObject(Class<T> type, Field field) throws Exception {
     SeqLanDataType fieldType = SeqLanDataType.getClassType(type);
     switch (fieldType) {
       case OBJECT:
@@ -81,25 +86,36 @@ class SeqLanObjReader {
   }
 
   // object and list
-  private <T> T readMessage(Class<T> type) throws IllegalAccessException, InstantiationException, IOException {
+  private <T> T readMessage(Class<T> type) throws Exception {
     Field[] fields = type.getFields();
     T msg = type.newInstance();
-    int i = 0;
     for (Field field : fields) {
-      BeforeRead beforeRead = field.getAnnotation(BeforeRead.class);
-      if (beforeRead != null) {
-        ((AbstractSeqLanObject) msg).beforeReadDo(i);
-      }
-      Object value = read(field.getType(), field);
+      Object value = readMessageField((AbstractSeqLanObject) msg, field);
       if (value != null) {
         field.set(msg, value);
       }
-      ++i;
     }
     return msg;
   }
 
-  private <T> ArrayList<T> readList(Class<T> elementType) throws InstantiationException, IllegalAccessException, IOException {
+  private Object readMessageField(AbstractSeqLanObject msg, Field field) throws Exception {
+    for (Annotation annotation : field.getDeclaredAnnotations()) {
+      if (annotation.annotationType().isAssignableFrom(ProcessFieldData.class)) {
+        return processFieldData(msg, field);
+      }
+    }
+    return read(field.getType(), field);
+  }
+
+  private Object processFieldData(AbstractSeqLanObject msg, Field field) throws Exception {
+    readNextDataLength();
+    readDataIntoCache();
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    SeqLan.writeLengthData(os, msg.processFieldData(cache, nextDataLength));
+    return wrap(new ByteArrayInputStream(os.toByteArray())).read(field.getType(), field);
+  }
+
+  private <T> ArrayList<T> readList(Class<T> elementType) throws Exception {
     ArrayList<T> list = new ArrayList<>();
     int end = index + nextDataLength;
     while (end > index) {
@@ -125,7 +141,7 @@ class SeqLanObjReader {
     int totalLen = nextDataLength;
     readNextDataLength();
     BigInteger value = readBigInteger();
-    nextDataLength = totalLen - varIntLength(nextDataLength) - nextDataLength;
+    nextDataLength = totalLen - SeqLan.varIntLength(nextDataLength) - nextDataLength;
     return new BigDecimal(value, readBigInteger().intValueExact());
   }
 
@@ -133,7 +149,6 @@ class SeqLanObjReader {
     readDataIntoCache();
     return new String(cache, 0, nextDataLength);
   }
-
 
   private void readNextDataLength() throws IOException {
     nextDataLength = 0;
@@ -156,7 +171,8 @@ class SeqLanObjReader {
   }
 
   private void readData(byte[] target) throws IOException {
-    if (source.read(target, 0, nextDataLength) < 0) {
+    int read = source.read(target, 0, nextDataLength);
+    if (read < 0) {
       throw new IOException("unexpected stream end reached");
     }
   }
@@ -170,18 +186,5 @@ class SeqLanObjReader {
       }
     }
     cache = new byte[cl];
-  }
-
-  private static int varIntLength(int varInt) {
-    if (varInt >= 0x80) {
-      if (varInt >= 0x4000) {
-        if (varInt >= 0x200000) {
-          return 4;
-        }
-        return 3;
-      }
-      return 2;
-    }
-    return 1;
   }
 }

@@ -14,7 +14,7 @@ class SeqLanObjWriter {
   static byte[] toByteArray(AbstractSeqLanObject msg) {
     try {
       return wrap(msg).doFinal();
-    } catch (IOException | IllegalAccessException e) {
+    } catch (Exception e) {
       throw new AException(e);
     }
   }
@@ -31,7 +31,7 @@ class SeqLanObjWriter {
     return new SeqLanObjWriter(object);
   }
 
-  private byte[] doFinal() throws IllegalAccessException, IOException {
+  private byte[] doFinal() throws Exception {
     if (value == null) {
       return null;
     }
@@ -62,15 +62,15 @@ class SeqLanObjWriter {
     return cache.toByteArray();
   }
 
-  private void writeCache(Object value) throws IOException, IllegalAccessException {
+  private void writeCache(Object value) throws Exception {
     if (value == null) {
-      writeVarInt(cache, 0);
+      SeqLan.writeVarInt(cache, 0);
     } else {
-      writeLengthData(cache, toByteArray(value));
+      SeqLan.writeLengthData(cache, toByteArray(value));
     }
   }
 
-  private static byte[] toByteArray(Object value) throws IOException, IllegalAccessException {
+  private static byte[] toByteArray(Object value) throws Exception {
     switch (SeqLanDataType.getFieldType(value)) {
       case OBJECT:
       case ARRAY:
@@ -93,37 +93,11 @@ class SeqLanObjWriter {
     }
   }
 
-  static void writeLengthData(OutputStream os, byte[] data) throws IOException {
-    if (data == null || data.length == 0) {
-      os.write(0);
-    } else {
-      writeVarInt(os, data.length);
-      os.write(data);
-    }
-  }
-
   private static byte[] toByteArray(BigDecimal value) throws IOException {
     ByteArrayOutputStream cache = new ByteArrayOutputStream();
     int scale = value.stripTrailingZeros().scale();
-    writeLengthData(cache, (scale == 0 ? value : value.movePointRight(scale)).toBigInteger().toByteArray());
+    SeqLan.writeLengthData(cache, (scale == 0 ? value : value.movePointRight(scale)).toBigInteger().toByteArray());
     cache.write(BigInteger.valueOf(scale).toByteArray());
     return cache.toByteArray();
-  }
-
-
-  private static void writeVarInt(OutputStream os, int varInt) throws IOException {
-    if (varInt < 0) {
-      throw new IllegalArgumentException();
-    }
-    if (varInt >= 0x80) {
-      if (varInt >= 0x4000) {
-        if (varInt >= 0x200000) {
-          os.write((varInt >> 21) & 0x7F | 0x80);
-        }
-        os.write((varInt >> 14) & 0x7F | 0x80);
-      }
-      os.write((varInt >> 7) & 0x7F | 0x80);
-    }
-    os.write((varInt) & 0x7F);
   }
 }

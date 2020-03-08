@@ -46,7 +46,7 @@ class TestSeqLan {
     byte[] rawB = os.toByteArray();
 
     Assert.isTrue(ByteUtils.equals(rawB, ByteUtils.fromHexString(rawHex)),
-                  "rawB should equals rawHex\nB: " + ByteUtils.toHexString(rawA) + "\nR: " + rawHex);
+                  "rawB should equals rawHex\nB: " + ByteUtils.toHexString(rawB) + "\nR: " + rawHex);
   }
 }
 
