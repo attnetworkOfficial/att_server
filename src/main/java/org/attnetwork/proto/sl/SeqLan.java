@@ -3,13 +3,13 @@ package org.attnetwork.proto.sl;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class SeqLan {
-  public static final String RAW = "raw";
-  public static final String NUMBER = "number";
-  public static final String DECIMAL = "decimal";
-  public static final String STRING = "string";
-  public static final String ARRAY = "array";
-  public static final String OBJECT = "object";
+public abstract class SeqLan {
+  static final String RAW = "raw";
+  static final String NUMBER = "number";
+  static final String DECIMAL = "decimal";
+  static final String STRING = "string";
+  static final String ARRAY = "array";
+  static final String OBJECT = "object";
 
   static void writeVarInt(OutputStream os, int varInt) throws IOException {
     if (varInt < 0) {
@@ -40,7 +40,7 @@ public class SeqLan {
     return 1;
   }
 
-  static void writeLengthData(OutputStream os, byte[] data) throws IOException {
+  public static void writeLengthData(OutputStream os, byte[] data) throws IOException {
     if (data == null || data.length == 0) {
       os.write(0);
     } else {

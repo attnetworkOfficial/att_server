@@ -13,14 +13,17 @@ import org.attnetwork.exception.AException;
 import org.attnetwork.proto.sl.AbstractSeqLanObject.ProcessFieldData;
 import org.attnetwork.utils.BitmapFlags;
 import org.attnetwork.utils.ReflectUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class SeqLanObjReader {
+  private static Logger log = LoggerFactory.getLogger(SeqLanObjReader.class);
 
   static <T extends AbstractSeqLanObject> T read(InputStream source, Class<T> msgType) {
     try {
       return wrap(source).read(msgType, null);
     } catch (Exception e) {
-      throw new AException(e);
+      throw AException.wrap(e);
     }
   }
 
@@ -48,7 +51,12 @@ class SeqLanObjReader {
     } else {
       int next = nextDataLength + index;
       T obj = readCurrentObject(type, field);
-      index = next;
+      if (index < next) {
+        log.warn("unread data remain for class:{}", type.getName());
+        index = next;
+      } else if (index > next) {
+        throw new AException("read data exceeded data-end!");
+      }
       return obj;
     }
   }
@@ -85,12 +93,11 @@ class SeqLanObjReader {
     }
   }
 
-  // object and list
   private <T> T readMessage(Class<T> type) throws Exception {
     Field[] fields = type.getFields();
     T msg = type.newInstance();
     for (Field field : fields) {
-      Object value = readMessageField((AbstractSeqLanObject) msg, field);
+      Object value = read(field.getType(), field);
       if (value != null) {
         field.set(msg, value);
       }

@@ -2,7 +2,6 @@ package org.attnetwork.proto.sl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -15,7 +14,7 @@ class SeqLanObjWriter {
     try {
       return wrap(msg).doFinal();
     } catch (Exception e) {
-      throw new AException(e);
+      throw AException.wrap(e);
     }
   }
 
@@ -85,7 +84,7 @@ class SeqLanObjWriter {
       case BIG_INTEGER:
         return ((BigInteger) value).toByteArray();
       case BIG_DECIMAL:
-        return toByteArray((BigDecimal) value);
+        return bigDecimalToByteArray((BigDecimal) value);
       case STRING:
         return ((String) value).getBytes();
       default:
@@ -93,7 +92,7 @@ class SeqLanObjWriter {
     }
   }
 
-  private static byte[] toByteArray(BigDecimal value) throws IOException {
+  private static byte[] bigDecimalToByteArray(BigDecimal value) throws IOException {
     ByteArrayOutputStream cache = new ByteArrayOutputStream();
     int scale = value.stripTrailingZeros().scale();
     SeqLan.writeLengthData(cache, (scale == 0 ? value : value.movePointRight(scale)).toBigInteger().toByteArray());

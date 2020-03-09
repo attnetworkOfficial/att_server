@@ -64,7 +64,7 @@ public class ECCrypto implements EncryptAsymmetric {
       this.signature = Signature.getInstance("SHA256withECDSA", provider);
       this.cipher = Cipher.getInstance("ECIES", provider);
     } catch (Exception e) {
-      throw new AException(e);
+      throw AException.wrap(e);
     }
 //    this.HALF_CURVE_ORDER = p.getN().shiftRight(1);
   }
@@ -79,7 +79,7 @@ public class ECCrypto implements EncryptAsymmetric {
         return cipher.doFinal();
       }
     } catch (Exception e) {
-      throw new AException(e);
+      throw AException.wrap(e);
     }
   }
 
@@ -90,7 +90,7 @@ public class ECCrypto implements EncryptAsymmetric {
         return cipher.doFinal(data);
       }
     } catch (Exception e) {
-      throw new AException(e);
+      throw AException.wrap(e);
     }
   }
 
@@ -98,6 +98,7 @@ public class ECCrypto implements EncryptAsymmetric {
     return algorithm;
   }
 
+  @Override
   public byte[] sign(PrivateKey privateKey, byte[] data) {
     try {
       synchronized (signature) {
@@ -106,10 +107,16 @@ public class ECCrypto implements EncryptAsymmetric {
         return signature.sign();
       }
     } catch (Exception e) {
-      throw new AException(e);
+      throw AException.wrap(e);
     }
   }
 
+  @Override
+  public boolean verify(byte[] publicKey, byte[] sign, byte[] data) {
+    return verify(restorePublicKey(publicKey), sign, data);
+  }
+
+  @Override
   public boolean verify(PublicKey publicKey, byte[] sign, byte[] data) {
     try {
       synchronized (signature) {
@@ -118,10 +125,11 @@ public class ECCrypto implements EncryptAsymmetric {
         return signature.verify(sign);
       }
     } catch (Exception e) {
-      throw new AException(e);
+      throw AException.wrap(e);
     }
   }
 
+  @Override
   public byte[] derivePublicKey(PrivateKey privateKey) {
     ECKeyPair ecKeyPair = restoreKeyPair((BCECPrivateKey) privateKey);
     return ecKeyPair.getPublicKey().getQ().getEncoded(true);
@@ -227,7 +235,7 @@ public class ECCrypto implements EncryptAsymmetric {
     return restorePublicKey(ByteUtils.fromHexString(hexString));
   }
 
-  private BCECPublicKey restorePublicKey(byte[] encoded) {
+  public BCECPublicKey restorePublicKey(byte[] encoded) {
     return restorePublicKey(ecParameterSpec.getCurve().decodePoint(encoded));
   }
 

@@ -15,4 +15,12 @@ public class AException extends RuntimeException {
   public AException(Throwable e) {
     super(e);
   }
+
+  public static AException wrap(Exception e) {
+    if (e instanceof AException) {
+      return (AException) e;
+    } else {
+      return new AException(e);
+    }
+  }
 }

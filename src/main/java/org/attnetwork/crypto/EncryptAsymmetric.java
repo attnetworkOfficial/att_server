@@ -8,6 +8,8 @@ public interface EncryptAsymmetric {
 
   byte[] sign(PrivateKey privateKey, byte[] data);
 
+  boolean verify(byte[] publicKey, byte[] sign, byte[] data);
+
   boolean verify(PublicKey publicKey, byte[] sign, byte[] data);
 
   byte[] derivePublicKey(PrivateKey privateKey);

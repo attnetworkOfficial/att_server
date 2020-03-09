@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 
 class ECCryptoTest {
-  private Logger logger = LoggerFactory.getLogger(getClass());
+  private Logger log = LoggerFactory.getLogger(getClass());
   private ECCrypto ecc = ECCrypto.instance();
 
   @Test
@@ -57,14 +57,14 @@ class ECCryptoTest {
 
 
       byte[] sign2 = ecc.sign(privateKey, data);
-      logger.debug("r:{} s:{}\ns2:{}", sign[0].toString(16), sign[1].toString(16), ByteUtils.toHexString(sign2));
+      log.debug("r:{} s:{}\ns2:{}", sign[0].toString(16), sign[1].toString(16), ByteUtils.toHexString(sign2));
 
       int v = ecc.generateSignV(publicKey.getQ(), sign, data);
       verify = ecc.verify(v, sign, data);
       Assert.isTrue(verify, "verify ecc from recovery public key fail\n" + info);
       countDownLatch.countDown();
     }
-    logger.trace("test sign verify finish");
+    log.trace("test sign verify finish");
   }
 
   @Test
@@ -92,7 +92,7 @@ class ECCryptoTest {
 
       countDownLatch.countDown();
     }
-    logger.trace("test sign verify finish");
+    log.trace("test sign verify finish");
   }
 
 

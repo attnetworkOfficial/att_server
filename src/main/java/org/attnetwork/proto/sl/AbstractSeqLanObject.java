@@ -37,10 +37,13 @@ public abstract class AbstractSeqLanObject {
     return raw = SeqLanObjWriter.toByteArray(this);
   }
 
+  public void setRaw(byte[] raw) {
+    this.raw = raw;
+  }
 
   @Target(ElementType.FIELD)
   @Retention(RetentionPolicy.RUNTIME)
-  protected  @interface ProcessFieldData {
+  protected @interface ProcessFieldData {
   }
 
   protected byte[] processFieldData(byte[] cache, int dataLength) {
