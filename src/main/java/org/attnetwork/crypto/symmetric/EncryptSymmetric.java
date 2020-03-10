@@ -1,4 +1,4 @@
-package org.attnetwork.crypto;
+package org.attnetwork.crypto.symmetric;
 
 import java.security.Key;
 

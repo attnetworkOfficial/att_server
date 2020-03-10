@@ -1,4 +1,4 @@
-package org.attnetwork.server.component.impl.l2;
+package org.attnetwork.server.component.l2.impl;
 
 import java.util.concurrent.ConcurrentHashMap;
 import org.attnetwork.server.AtTnSession;

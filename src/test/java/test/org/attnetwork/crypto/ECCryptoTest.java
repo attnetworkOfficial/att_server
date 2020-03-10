@@ -4,6 +4,8 @@ import java.math.BigInteger;
 import java.util.concurrent.CountDownLatch;
 import org.attnetwork.crypto.ECCrypto;
 import org.attnetwork.crypto.ECKeyPair;
+import org.attnetwork.crypto.asymmetric.AsmKeyPair;
+import org.attnetwork.crypto.asymmetric.AsmPublicKeyChain;
 import org.attnetwork.utils.HashUtil;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
@@ -56,7 +58,7 @@ class ECCryptoTest {
       Assert.isTrue(verify, "verify ecc sign fail\n" + info);
 
 
-      byte[] sign2 = ecc.sign(privateKey, data);
+      byte[] sign2 = ecc.sign(privateKey, data).raw;
       log.debug("r:{} s:{}\ns2:{}", sign[0].toString(16), sign[1].toString(16), ByteUtils.toHexString(sign2));
 
       int v = ecc.generateSignV(publicKey.getQ(), sign, data);
@@ -86,7 +88,7 @@ class ECCryptoTest {
       byte[] data = HashUtil.sha256(("asdfafds" + i).getBytes());
       String info = "prv: " + privateKey.getD().toString(16) +
                     "\ndata: " + ByteUtils.toHexString(data);
-      byte[] sign = ecc.sign(privateKey, data);
+      byte[] sign = ecc.sign(privateKey, data).raw;
       boolean verify = ecc.verify(publicKey, sign, data);
       Assert.isTrue(verify, "verify ecc sign fail\n" + info);
 
@@ -94,7 +96,6 @@ class ECCryptoTest {
     }
     log.trace("test sign verify finish");
   }
-
 
 
   @Test
@@ -105,10 +106,42 @@ class ECCryptoTest {
 
     byte[] origin = new byte[10000];
     byte[] encrypt = ecc.encrypt(publicKey, origin);
-    System.out.println(encrypt.length);
     byte[] decrypt = ecc.decrypt(privateKey, encrypt);
-    System.out.println(decrypt.length);
 
     Assert.isTrue(ByteUtils.equals(origin, decrypt), "fail");
+  }
+
+  @Test
+  void testKeyChain() {
+    AsmKeyPair rootKeyPair = ecc.generateRootKey();
+    byte[] raw = rootKeyPair.getRaw();
+    byte[] rootPublicKey = rootKeyPair.publicKeyChain.key.raw;
+    Long now = System.currentTimeMillis();
+
+    AsmKeyPair l2KeyPair = ecc.generateSubKey(rootKeyPair, now, now + 10_000L);
+    AsmPublicKeyChain.Validation validation = l2KeyPair.publicKeyChain.isValid(rootPublicKey, ecc);
+    Assert.isTrue(validation.isValid, "l2 verify fail: " + validation);
+
+    AsmKeyPair l3KeyPair = ecc.generateSubKey(l2KeyPair, now, now + 1_000L);
+    validation = l3KeyPair.publicKeyChain.isValid(rootPublicKey, ecc);
+    Assert.isTrue(validation.isValid, "l3 verify fail: " + validation);
+
+    AsmKeyPair l4KeyPair = ecc.generateSubKey(l3KeyPair, now, now - 1L);
+    validation = l4KeyPair.publicKeyChain.isValid(rootPublicKey, ecc);
+    Assert.isTrue(!validation.isValid, "l4 expire fail");
+
+    // recreate l4 key pair
+    l4KeyPair = ecc.generateSubKey(l3KeyPair, now, now + 1_000L);
+    validation = l4KeyPair.publicKeyChain.isValid(rootPublicKey, ecc);
+    Assert.isTrue(validation.isValid, "l4 verify fail: " + validation);
+
+    log.debug("\n{}", l4KeyPair.publicKeyChain.toString());
+
+    l2KeyPair.publicKeyChain.key.endTimestamp += 1000L;
+    l2KeyPair.publicKeyChain.key.clearRaw();
+
+    validation = l4KeyPair.publicKeyChain.isValid(rootPublicKey, ecc);
+    Assert.isTrue(validation.equals(AsmPublicKeyChain.Validation.INVALID_SIGN),
+                  "l4 check fail, the sign should be invalid");
   }
 }

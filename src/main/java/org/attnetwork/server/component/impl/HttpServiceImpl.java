@@ -3,6 +3,8 @@ package org.attnetwork.server.component.impl;
 import java.io.IOException;
 import org.attnetwork.proto.msg.SessionStartMsg;
 import org.attnetwork.proto.msg.wrapper.AtTnMsg;
+import org.attnetwork.proto.msg.wrapper.SignedMsg;
+import org.attnetwork.proto.msg.wrapper.WrapType;
 import org.attnetwork.proto.sl.AbstractSeqLanObject;
 import org.attnetwork.server.AtTnSession;
 import org.attnetwork.server.component.HttpService;
@@ -27,7 +29,14 @@ public class HttpServiceImpl implements HttpService {
     }
     AtTnMsg msg = AtTnMsg.read(inputMessage.getBody(), AtTnMsg.class);
     AtTnSession session = sessionService.getSession(msg.sessionId);
-    byte[] data = msg.getMsg();
+    byte[] data = msg.msg;
     return AtTnMsg.read(inputMessage.getBody(), type);
+  }
+
+  private void sign(AbstractSeqLanObject msg) {
+    SignedMsg signedMsg = new SignedMsg();
+    byte[] data = msg.getRaw();
+    byte[] sign = null;
+    signedMsg.wrap(WrapType.SIGN, data);
   }
 }

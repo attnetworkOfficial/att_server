@@ -30,11 +30,11 @@ public abstract class AbstractSeqLanObject {
   }
 
   public byte[] getRaw() {
-    return raw == null ? getNewRaw() : raw;
+    return raw == null ? SeqLanObjWriter.toByteArray(this) : raw;
   }
 
-  public byte[] getNewRaw() {
-    return raw = SeqLanObjWriter.toByteArray(this);
+  public void clearRaw() {
+    raw = null;
   }
 
   public void setRaw(byte[] raw) {

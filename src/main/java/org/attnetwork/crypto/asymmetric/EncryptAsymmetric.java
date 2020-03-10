@@ -1,12 +1,10 @@
-package org.attnetwork.crypto;
+package org.attnetwork.crypto.asymmetric;
 
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
 public interface EncryptAsymmetric {
-  String getAsymmetricAlgorithm();
-
-  byte[] sign(PrivateKey privateKey, byte[] data);
+  AsmSignature sign(PrivateKey privateKey, byte[] data);
 
   boolean verify(byte[] publicKey, byte[] sign, byte[] data);
 

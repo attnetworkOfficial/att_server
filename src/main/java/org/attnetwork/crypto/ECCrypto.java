@@ -11,6 +11,11 @@ import java.security.Signature;
 import java.security.spec.ECGenParameterSpec;
 import java.util.Arrays;
 import javax.crypto.Cipher;
+import org.attnetwork.crypto.asymmetric.AsmKeyPair;
+import org.attnetwork.crypto.asymmetric.AsmPublicKey;
+import org.attnetwork.crypto.asymmetric.AsmPublicKeyChain;
+import org.attnetwork.crypto.asymmetric.AsmSignature;
+import org.attnetwork.crypto.asymmetric.EncryptAsymmetric;
 import org.attnetwork.exception.AException;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
@@ -36,6 +41,7 @@ import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 public class ECCrypto implements EncryptAsymmetric {
   private final String algorithm;
   private final String paramName;
+  private final String signAlgorithm;
   private final String provider;
 
   private final ECParameterSpec ecParameterSpec;
@@ -48,20 +54,21 @@ public class ECCrypto implements EncryptAsymmetric {
   }
 
   public static ECCrypto instance() {
-    return new ECCrypto("EC", "secp256k1", BouncyCastleProvider.PROVIDER_NAME);
+    return new ECCrypto("EC", "secp256k1", "SHA256withECDSA", BouncyCastleProvider.PROVIDER_NAME);
   }
 
-  private ECCrypto(String algorithm, String paramName, String provider) {
+  private ECCrypto(String algorithm, String paramName, String signAlgorithm, String provider) {
     this.algorithm = algorithm;
     this.paramName = paramName;
     this.provider = provider;
+    this.signAlgorithm = signAlgorithm;
 
     X9ECParameters p = SECNamedCurves.getByName(paramName);
     this.ecDomainParameters = new ECDomainParameters(p.getCurve(), p.getG(), p.getN(), p.getH());
     this.ecParameterSpec = ECNamedCurveTable.getParameterSpec(paramName);
 
     try {
-      this.signature = Signature.getInstance("SHA256withECDSA", provider);
+      this.signature = Signature.getInstance(signAlgorithm, provider);
       this.cipher = Cipher.getInstance("ECIES", provider);
     } catch (Exception e) {
       throw AException.wrap(e);
@@ -94,17 +101,13 @@ public class ECCrypto implements EncryptAsymmetric {
     }
   }
 
-  public String getAsymmetricAlgorithm() {
-    return algorithm;
-  }
-
   @Override
-  public byte[] sign(PrivateKey privateKey, byte[] data) {
+  public AsmSignature sign(PrivateKey privateKey, byte[] data) {
     try {
       synchronized (signature) {
         signature.initSign(privateKey);
         signature.update(data);
-        return signature.sign();
+        return AsmSignature.build(signAlgorithm, signature.sign());
       }
     } catch (Exception e) {
       throw AException.wrap(e);
@@ -218,6 +221,40 @@ public class ECCrypto implements EncryptAsymmetric {
     }
   }
 
+  public AsmKeyPair generateRootKey() {
+    return generateSubKey(null, null, null);
+  }
+
+  public AsmKeyPair generateSubKey(AsmKeyPair superKeyPair, Long start, Long end) {
+    ECKeyPair geneKeyPair = generateKeyPair();
+    // setup validations
+    AsmPublicKeyChain pubKeyChain = new AsmPublicKeyChain();
+    pubKeyChain.key = wrapPublicKey(geneKeyPair, start, end);
+    if (superKeyPair != null) {
+      if (!superKeyPair.publicKeyChain.key.isValidTimestamp()) {
+        throw new AException("superKeyPair time invalid");
+      }
+      // sign with super key
+      byte[] publicKey = pubKeyChain.key.getRaw();
+      pubKeyChain.sign = sign(restorePrivateKey(superKeyPair.privateKey), publicKey);
+      pubKeyChain.superKey = superKeyPair.publicKeyChain;
+    }
+    AsmKeyPair keyPair = new AsmKeyPair();
+    keyPair.privateKey = geneKeyPair.getPrivateKey().getD().toByteArray();
+    keyPair.publicKeyChain = pubKeyChain;
+    return keyPair;
+  }
+
+  private AsmPublicKey wrapPublicKey(ECKeyPair keyPair, Long start, Long end) {
+    AsmPublicKey pub = new AsmPublicKey();
+    pub.algorithm = algorithm + "-" + paramName;
+    pub.startTimestamp = start;
+    pub.endTimestamp = end;
+    pub.desc = "";
+    pub.raw = keyPair.getPublicKey().getQ().getEncoded(true);
+    return pub;
+  }
+
   public ECKeyPair restoreKeyPair(String hexString) {
     return restoreKeyPair(restorePrivateKey(hexString));
   }
@@ -227,7 +264,15 @@ public class ECCrypto implements EncryptAsymmetric {
   }
 
   public BCECPrivateKey restorePrivateKey(String hexString) {
-    ECPrivateKeySpec ecPrivateKeySpec = new ECPrivateKeySpec(new BigInteger(hexString, 16), ecParameterSpec);
+    return restorePrivateKey(new BigInteger(hexString, 16));
+  }
+
+  public BCECPrivateKey restorePrivateKey(byte[] encoded) {
+    return restorePrivateKey(new BigInteger(encoded));
+  }
+
+  public BCECPrivateKey restorePrivateKey(BigInteger d) {
+    ECPrivateKeySpec ecPrivateKeySpec = new ECPrivateKeySpec(d, ecParameterSpec);
     return new BCECPrivateKey(algorithm, ecPrivateKeySpec, BouncyCastleProvider.CONFIGURATION);
   }
 
