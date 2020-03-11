@@ -1,5 +1,6 @@
 package org.attnetwork.proto.sl;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -11,15 +12,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class AbstractSeqLanObject {
-  protected Logger log = LoggerFactory.getLogger(getClass());
+  private Logger log = LoggerFactory.getLogger(getClass());
 
-  protected byte[] raw;
+  byte[] raw;
 
   /**
    * convert raw message to a Java Object instance.
    */
   public static <T extends AbstractSeqLanObject> T read(InputStream source, Class<T> msgType) {
     return SeqLanObjReader.read(source, msgType);
+  }
+
+  public static <T extends AbstractSeqLanObject> T read(byte[] source, Class<T> msgType) {
+    return SeqLanObjReader.read(new ByteArrayInputStream(source), msgType);
   }
 
   /**

@@ -58,7 +58,7 @@ class ECCryptoTest {
       Assert.isTrue(verify, "verify ecc sign fail\n" + info);
 
 
-      byte[] sign2 = ecc.sign(privateKey, data).raw;
+      byte[] sign2 = ecc.sign(privateKey, data).data;
       log.debug("r:{} s:{}\ns2:{}", sign[0].toString(16), sign[1].toString(16), ByteUtils.toHexString(sign2));
 
       int v = ecc.generateSignV(publicKey.getQ(), sign, data);
@@ -88,7 +88,7 @@ class ECCryptoTest {
       byte[] data = HashUtil.sha256(("asdfafds" + i).getBytes());
       String info = "prv: " + privateKey.getD().toString(16) +
                     "\ndata: " + ByteUtils.toHexString(data);
-      byte[] sign = ecc.sign(privateKey, data).raw;
+      byte[] sign = ecc.sign(privateKey, data).data;
       boolean verify = ecc.verify(publicKey, sign, data);
       Assert.isTrue(verify, "verify ecc sign fail\n" + info);
 
@@ -105,7 +105,7 @@ class ECCryptoTest {
     BCECPublicKey publicKey = pair.getPublicKey();
 
     byte[] origin = new byte[10000];
-    byte[] encrypt = ecc.encrypt(publicKey, origin);
+    byte[] encrypt = ecc.encrypt(publicKey, origin).data;
     byte[] decrypt = ecc.decrypt(privateKey, encrypt);
 
     Assert.isTrue(ByteUtils.equals(origin, decrypt), "fail");
@@ -115,7 +115,7 @@ class ECCryptoTest {
   void testKeyChain() {
     AsmKeyPair rootKeyPair = ecc.generateRootKey();
     byte[] raw = rootKeyPair.getRaw();
-    byte[] rootPublicKey = rootKeyPair.publicKeyChain.key.raw;
+    byte[] rootPublicKey = rootKeyPair.publicKeyChain.key.data;
     Long now = System.currentTimeMillis();
 
     AsmKeyPair l2KeyPair = ecc.generateSubKey(rootKeyPair, now, now + 10_000L);
@@ -141,7 +141,7 @@ class ECCryptoTest {
     l2KeyPair.publicKeyChain.key.clearRaw();
 
     validation = l4KeyPair.publicKeyChain.isValid(rootPublicKey, ecc);
-    Assert.isTrue(validation.equals(AsmPublicKeyChain.Validation.INVALID_SIGN),
+    Assert.isTrue(validation.equals(AsmPublicKeyChain.Validation.INVALID_KEY_SIGN),
                   "l4 check fail, the sign should be invalid");
   }
 }

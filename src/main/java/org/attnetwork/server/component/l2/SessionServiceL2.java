@@ -1,7 +1,7 @@
 package org.attnetwork.server.component.l2;
 
-import org.attnetwork.server.AtTnSession;
+import org.attnetwork.server.component.l2.obj.AtTnSession;
 
 public interface SessionServiceL2 {
-  AtTnSession getSession(String sessionId);
+  AtTnSession getSession(byte[] sessionId);
 }

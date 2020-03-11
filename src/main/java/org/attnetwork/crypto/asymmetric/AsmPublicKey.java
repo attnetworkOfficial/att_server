@@ -4,12 +4,12 @@ import org.attnetwork.proto.sl.AbstractSeqLanObject;
 import org.attnetwork.utils.DateUtil;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 
-public class AsmPublicKey extends AbstractSeqLanObject {
+public final class AsmPublicKey extends AbstractSeqLanObject {
   public String algorithm;
   public Long startTimestamp;
   public Long endTimestamp;
   public String desc;
-  public byte[] raw;
+  public byte[] data;
 
   @Override
   public String toString() {
@@ -18,7 +18,7 @@ public class AsmPublicKey extends AbstractSeqLanObject {
            "\ninvalid before: " + DateUtil.toHumanString(startTimestamp) +
            "\ninvalid after:  " + DateUtil.toHumanString(endTimestamp) +
            "\ndescription:    " + desc +
-           "\nkey:            " + ByteUtils.toHexString(raw);
+           "\nkey:            " + ByteUtils.toHexString(data);
   }
 
   public boolean isValidTimestamp() {

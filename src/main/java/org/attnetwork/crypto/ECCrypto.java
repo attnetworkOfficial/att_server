@@ -38,10 +38,11 @@ import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 
-public class ECCrypto implements EncryptAsymmetric {
+public class ECCrypto implements EncryptAsymmetric, Encrypt {
   private final String algorithm;
   private final String paramName;
   private final String signAlgorithm;
+  private final String encryptAlgorithm;
   private final String provider;
 
   private final ECParameterSpec ecParameterSpec;
@@ -54,14 +55,25 @@ public class ECCrypto implements EncryptAsymmetric {
   }
 
   public static ECCrypto instance() {
-    return new ECCrypto("EC", "secp256k1", "SHA256withECDSA", BouncyCastleProvider.PROVIDER_NAME);
+    return new ECCrypto(
+        "EC",
+        "secp256k1",
+        "SHA256withECDSA",
+        "ECIES",
+        BouncyCastleProvider.PROVIDER_NAME);
   }
 
-  private ECCrypto(String algorithm, String paramName, String signAlgorithm, String provider) {
+  private ECCrypto(
+      String algorithm,
+      String paramName,
+      String signAlgorithm,
+      String encryptAlgorithm,
+      String provider) {
     this.algorithm = algorithm;
     this.paramName = paramName;
     this.provider = provider;
     this.signAlgorithm = signAlgorithm;
+    this.encryptAlgorithm = encryptAlgorithm;
 
     X9ECParameters p = SECNamedCurves.getByName(paramName);
     this.ecDomainParameters = new ECDomainParameters(p.getCurve(), p.getG(), p.getN(), p.getH());
@@ -69,27 +81,29 @@ public class ECCrypto implements EncryptAsymmetric {
 
     try {
       this.signature = Signature.getInstance(signAlgorithm, provider);
-      this.cipher = Cipher.getInstance("ECIES", provider);
+      this.cipher = Cipher.getInstance(encryptAlgorithm, provider);
     } catch (Exception e) {
       throw AException.wrap(e);
     }
 //    this.HALF_CURVE_ORDER = p.getN().shiftRight(1);
   }
 
-  public byte[] encrypt(Key key, byte[]... data) {
+  @Override
+  public EncryptedData encrypt(Key key, byte[]... data) {
     try {
       synchronized (cipher) {
         cipher.init(Cipher.ENCRYPT_MODE, key);
         for (byte[] d : data) {
           cipher.update(d);
         }
-        return cipher.doFinal();
+        return EncryptedData.build(encryptAlgorithm, cipher.doFinal());
       }
     } catch (Exception e) {
       throw AException.wrap(e);
     }
   }
 
+  @Override
   public byte[] decrypt(Key key, byte[] data) {
     try {
       synchronized (cipher) {
@@ -251,7 +265,7 @@ public class ECCrypto implements EncryptAsymmetric {
     pub.startTimestamp = start;
     pub.endTimestamp = end;
     pub.desc = "";
-    pub.raw = keyPair.getPublicKey().getQ().getEncoded(true);
+    pub.data = keyPair.getPublicKey().getQ().getEncoded(true);
     return pub;
   }
 

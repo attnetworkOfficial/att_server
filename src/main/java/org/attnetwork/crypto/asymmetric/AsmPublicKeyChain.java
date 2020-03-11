@@ -3,7 +3,7 @@ package org.attnetwork.crypto.asymmetric;
 import org.attnetwork.proto.sl.AbstractSeqLanObject;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 
-public class AsmPublicKeyChain extends AbstractSeqLanObject {
+public final class AsmPublicKeyChain extends AbstractSeqLanObject {
   public AsmPublicKey key;
   public AsmSignature sign;
   public AsmPublicKeyChain superKey;
@@ -21,6 +21,10 @@ public class AsmPublicKeyChain extends AbstractSeqLanObject {
     return s;
   }
 
+  public Validation isValid(EncryptAsymmetric encrypt) {
+    return isValid(this, null, encrypt);
+  }
+
   public Validation isValid(byte[] trusted, EncryptAsymmetric encrypt) {
     return isValid(this, trusted, encrypt);
   }
@@ -31,7 +35,7 @@ public class AsmPublicKeyChain extends AbstractSeqLanObject {
       return Validation.EXPIRED;
     }
     while (true) {
-      if (ByteUtils.equals(trusted, publicKeyChain.key.raw)) {
+      if (trusted != null && ByteUtils.equals(trusted, publicKeyChain.key.data)) {
         return Validation.VALID;
       }
       // if key is not trusted, using superKey to verify it
@@ -40,13 +44,13 @@ public class AsmPublicKeyChain extends AbstractSeqLanObject {
       // load superKey
       publicKeyChain = publicKeyChain.superKey;
       if (publicKeyChain == null) {
-        return Validation.NOT_TRUSTED;
+        return trusted == null ? Validation.VALID : Validation.NOT_TRUSTED;
       }
       if (!publicKeyChain.key.isValidTimestamp(now)) {
         return Validation.EXPIRED;
       }
-      if (!encrypt.verify(publicKeyChain.key.raw, sign.raw, checkData)) {
-        return Validation.INVALID_SIGN;
+      if (!encrypt.verify(publicKeyChain.key.data, sign.data, checkData)) {
+        return Validation.INVALID_KEY_SIGN;
       }
     }
   }
@@ -54,7 +58,7 @@ public class AsmPublicKeyChain extends AbstractSeqLanObject {
   public enum Validation {
     VALID(true),
     EXPIRED(false),
-    INVALID_SIGN(false),
+    INVALID_KEY_SIGN(false),
     NOT_TRUSTED(false);
 
     public final boolean isValid;

@@ -1,6 +1,8 @@
 package org.attnetwork.proto.msg;
 
-import org.attnetwork.proto.msg.wrapper.SignedMsg;
+import org.attnetwork.proto.sl.AbstractSeqLanObject;
 
-public class SessionStartMsg extends SignedMsg {
+public final class SessionStartMsg extends AbstractSeqLanObject {
+  public String algorithm;
+  public byte[] random;
 }

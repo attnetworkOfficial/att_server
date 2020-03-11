@@ -9,6 +9,5 @@ public class ExampleUserMsg extends AbstractSeqLanObject {
   public String lastName;
   public BigDecimal score;
   public String phone;
-  @ProcessFieldData
   public ExampleUserContactMsg[] contacts;
 }
