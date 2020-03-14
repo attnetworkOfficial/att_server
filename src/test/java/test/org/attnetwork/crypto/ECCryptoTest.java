@@ -9,6 +9,7 @@ import org.attnetwork.crypto.asymmetric.AsmPublicKeyChain;
 import org.attnetwork.utils.HashUtil;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
+import org.bouncycastle.jce.spec.IEKeySpec;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -100,13 +101,19 @@ class ECCryptoTest {
 
   @Test
   void testCrypt() {
-    ECKeyPair pair = ecc.generateKeyPair();
-    BCECPrivateKey privateKey = pair.getPrivateKey();
-    BCECPublicKey publicKey = pair.getPublicKey();
+    ECKeyPair alice = ecc.generateKeyPair();
+    ECKeyPair bob = ecc.generateKeyPair();
 
-    byte[] origin = new byte[10000];
-    byte[] encrypt = ecc.encrypt(publicKey, origin).data;
-    byte[] decrypt = ecc.decrypt(privateKey, encrypt);
+    byte[] origin = new byte[1000];
+    byte[] encrypt = ecc.encrypt(new IEKeySpec(alice.getPrivateKey(), bob.getPublicKey()), origin).data;
+    System.out.println(ByteUtils.toHexString(encrypt));
+    byte[] decrypt = ecc.decrypt(new IEKeySpec(bob.getPrivateKey(), alice.getPublicKey()), encrypt);
+
+    Assert.isTrue(ByteUtils.equals(origin, decrypt), "fail");
+
+    encrypt = ecc.encrypt(alice.getPublicKey(), origin).data;
+    System.out.println(ByteUtils.toHexString(encrypt));
+    decrypt = ecc.decrypt(alice.getPrivateKey(), encrypt);
 
     Assert.isTrue(ByteUtils.equals(origin, decrypt), "fail");
   }
@@ -114,7 +121,6 @@ class ECCryptoTest {
   @Test
   void testKeyChain() {
     AsmKeyPair rootKeyPair = ecc.generateRootKey();
-    byte[] raw = rootKeyPair.getRaw();
     byte[] rootPublicKey = rootKeyPair.publicKeyChain.key.data;
     Long now = System.currentTimeMillis();
 
@@ -134,8 +140,6 @@ class ECCryptoTest {
     l4KeyPair = ecc.generateSubKey(l3KeyPair, now, now + 1_000L);
     validation = l4KeyPair.publicKeyChain.isValid(rootPublicKey, ecc);
     Assert.isTrue(validation.isValid, "l4 verify fail: " + validation);
-
-    log.debug("\n{}", l4KeyPair.publicKeyChain.toString());
 
     l2KeyPair.publicKeyChain.key.endTimestamp += 1000L;
     l2KeyPair.publicKeyChain.key.clearRaw();

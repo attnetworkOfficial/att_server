@@ -1,7 +1,9 @@
 package org.attnetwork.server.component.l2;
 
-import org.attnetwork.server.component.l2.obj.AtTnSession;
+import org.attnetwork.crypto.asymmetric.AsmPublicKeyChain;
+import org.attnetwork.proto.msg.SessionStartMsg;
+import org.attnetwork.proto.msg.SessionStartMsgResp;
 
 public interface SessionServiceL2 {
-  AtTnSession getSession(byte[] sessionId);
+  SessionStartMsgResp startSession(SessionStartMsg req, AsmPublicKeyChain signer);
 }

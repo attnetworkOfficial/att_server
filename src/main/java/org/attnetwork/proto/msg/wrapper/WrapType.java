@@ -1,12 +1,17 @@
 package org.attnetwork.proto.msg.wrapper;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 public enum WrapType {
   ATTN_PROTO(0x00),
   SIGN(0x04),
   ENCRYPT(0x08);
+
+  public static final List<WrapType> L_ENCRYPT_SIGN = Arrays.asList(WrapType.ENCRYPT, WrapType.SIGN);
+  public static final List<WrapType> L_SIGN_ENCRYPT = Arrays.asList(WrapType.SIGN, WrapType.ENCRYPT);
 
   private static final HashMap<Integer, WrapType> codeMap;
 

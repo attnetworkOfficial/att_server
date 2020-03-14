@@ -21,6 +21,14 @@ public final class AsmPublicKeyChain extends AbstractSeqLanObject {
     return s;
   }
 
+  public AsmPublicKey rootKey() {
+    AsmPublicKeyChain root = this;
+    while (root.superKey != null) {
+      root = root.superKey;
+    }
+    return root.key;
+  }
+
   public Validation isValid(EncryptAsymmetric encrypt) {
     return isValid(this, null, encrypt);
   }

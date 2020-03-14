@@ -8,6 +8,8 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
+import org.bouncycastle.util.encoders.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,18 +26,26 @@ public abstract class AbstractSeqLanObject {
   }
 
   public static <T extends AbstractSeqLanObject> T read(byte[] source, Class<T> msgType) {
-    return SeqLanObjReader.read(new ByteArrayInputStream(source), msgType);
+    return read(new ByteArrayInputStream(source), msgType);
+  }
+
+  public static <T extends AbstractSeqLanObject> T readBase64String(String source, Class<T> msgType) {
+    return read(Base64.decode(source), msgType);
+  }
+
+  public static <T extends AbstractSeqLanObject> T readHexString(String source, Class<T> msgType) {
+    return read(ByteUtils.fromHexString(source), msgType);
   }
 
   /**
    * write message into an output stream.
    */
   public void write(OutputStream os) throws IOException {
-    SeqLan.writeLengthData(os, getRaw());
+    os.write(getRaw());
   }
 
   public byte[] getRaw() {
-    return raw == null ? SeqLanObjWriter.toByteArray(this) : raw;
+    return raw == null ? raw = SeqLanObjWriter.toByteArray(this) : raw;
   }
 
   public void clearRaw() {
@@ -44,6 +54,14 @@ public abstract class AbstractSeqLanObject {
 
   public void setRaw(byte[] raw) {
     this.raw = raw;
+  }
+
+  public String toBase64String() {
+    return Base64.toBase64String(getRaw());
+  }
+
+  public String toHexString() {
+    return ByteUtils.toHexString(getRaw());
   }
 
   @Target(ElementType.FIELD)

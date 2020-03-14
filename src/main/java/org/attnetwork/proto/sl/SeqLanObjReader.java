@@ -52,7 +52,7 @@ class SeqLanObjReader {
       int next = nextDataLength + index;
       T obj = readCurrentObject(type, field);
       if (index < next) {
-        log.warn("unread data remain for class:{}", type.getName());
+        log.warn("unread data remain for class:{}, index:{}, next:{}", type.getName(), index, next);
         index = next;
       } else if (index > next) {
         throw new AException("read data exceeded data-end!");
@@ -174,7 +174,6 @@ class SeqLanObjReader {
   private void readDataIntoCache() throws IOException {
     expandCache();
     readData(cache);
-    index += nextDataLength;
   }
 
   private void readData(byte[] target) throws IOException {
@@ -182,6 +181,7 @@ class SeqLanObjReader {
     if (read < 0) {
       throw new IOException("unexpected stream end reached");
     }
+    index += nextDataLength;
   }
 
   private void expandCache() {

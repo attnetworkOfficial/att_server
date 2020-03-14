@@ -12,7 +12,10 @@ class SeqLanObjWriter {
 
   static byte[] toByteArray(AbstractSeqLanObject msg) {
     try {
-      return wrap(msg).doFinal();
+      ByteArrayOutputStream cache = new ByteArrayOutputStream();
+      byte[] data = wrap(msg).doFinal();
+      SeqLan.writeLengthData(cache, data);
+      return cache.toByteArray();
     } catch (Exception e) {
       throw AException.wrap(e);
     }

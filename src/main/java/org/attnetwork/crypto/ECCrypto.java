@@ -264,7 +264,7 @@ public class ECCrypto implements EncryptAsymmetric, Encrypt {
     pub.algorithm = algorithm + "-" + paramName;
     pub.startTimestamp = start;
     pub.endTimestamp = end;
-    pub.desc = "";
+    pub.desc = "desc";
     pub.data = keyPair.getPublicKey().getQ().getEncoded(true);
     return pub;
   }

@@ -3,7 +3,7 @@ package org.attnetwork.proto.sl;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public abstract class SeqLan {
+abstract class SeqLan {
   static final String RAW = "raw";
   static final String NUMBER = "number";
   static final String DECIMAL = "decimal";
@@ -40,7 +40,7 @@ public abstract class SeqLan {
     return 1;
   }
 
-  public static void writeLengthData(OutputStream os, byte[] data) throws IOException {
+  static void writeLengthData(OutputStream os, byte[] data) throws IOException {
     if (data == null || data.length == 0) {
       os.write(0);
     } else {

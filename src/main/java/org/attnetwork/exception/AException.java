@@ -23,4 +23,8 @@ public class AException extends RuntimeException {
       return new AException(e);
     }
   }
+
+  public String getCode() {
+    return code;
+  }
 }

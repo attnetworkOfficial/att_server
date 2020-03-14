@@ -6,10 +6,10 @@ public final class WrappedMsg extends AbstractSeqLanObject {
   public Integer wrapType;
   public byte[] data;
 
-  public static WrappedMsg wrap(WrapType wrapType, byte[] data) {
+  public static WrappedMsg wrap(WrapType wrapType, AbstractSeqLanObject msg) {
     WrappedMsg w = new WrappedMsg();
-    w.wrapType = wrapType.getCode();
-    w.data = data;
+    w.wrapType = wrapType == null ? null : wrapType.getCode();
+    w.data = msg.getRaw();
     return w;
   }
 }

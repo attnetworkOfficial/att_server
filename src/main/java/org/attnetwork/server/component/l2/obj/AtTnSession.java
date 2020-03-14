@@ -1,32 +1,12 @@
 package org.attnetwork.server.component.l2.obj;
 
+import org.attnetwork.crypto.asymmetric.AsmPublicKeyChain;
+
 public class AtTnSession {
-  private String sessionId;
-  private String algorithm;
-  private byte[] publicKey;
-
-
-  public String getSessionId() {
-    return sessionId;
-  }
-
-  public void setSessionId(String sessionId) {
-    this.sessionId = sessionId;
-  }
-
-  public String getAlgorithm() {
-    return algorithm;
-  }
-
-  public void setAlgorithm(String algorithm) {
-    this.algorithm = algorithm;
-  }
-
-  public byte[] getPublicKey() {
-    return publicKey;
-  }
-
-  public void setPublicKey(byte[] publicKey) {
-    this.publicKey = publicKey;
-  }
+  public String algorithm;
+  public Integer sessionId;
+  public byte[] sharedSecret;
+  public AsmPublicKeyChain userPublicKeyChain;
+  public long createTimestamp;
+  public long lastActiveTime;
 }

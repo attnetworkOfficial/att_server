@@ -21,6 +21,20 @@ public final class AsmPublicKey extends AbstractSeqLanObject {
            "\nkey:            " + ByteUtils.toHexString(data);
   }
 
+
+  @Override
+  public int hashCode() {
+    return ByteUtils.deepHashCode(data);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o instanceof AsmPublicKey) {
+      return ByteUtils.equals(data, ((AsmPublicKey) o).data);
+    }
+    return false;
+  }
+
   public boolean isValidTimestamp() {
     return isValidTimestamp(System.currentTimeMillis());
   }
