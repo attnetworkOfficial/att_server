@@ -2,6 +2,7 @@ package test.org.tools;
 
 import org.attnetwork.crypto.ECCrypto;
 import org.attnetwork.crypto.asymmetric.AsmKeyPair;
+import org.attnetwork.crypto.asymmetric.AsmPublicKey;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.event.annotation.BeforeTestClass;
@@ -16,63 +17,59 @@ public class KeyGenerator {
 
   @Test
   void generateRootKey() {
-    System.out.println("generate root key");
+    System.out.println("============ generate root key ============");
     AsmKeyPair rootKeyPair = ecc.generateRootKey();
-    System.out.println("   hex: " + rootKeyPair.toHexString());
+    rootKeyPair.publicKeyChain.key.desc("TEST-ROOT");
     System.out.println("base64: " + rootKeyPair.toBase64String());
     System.out.println(rootKeyPair.publicKeyChain);
   }
 
-  // generate root key
-  //   hex: 5c21008bce8ebfd66ca0161b5336c98d13aed3f540b1194ea0b31d953ea25635398dd139360c45432d736563703235366b31000004646573632102bf4e59b8c6a3c48514d53e745f98bfc7e52efc35dbd166706f157ffcfdc506650000
-  //base64: XCEAi86Ov9ZsoBYbUzbJjROu0/VAsRlOoLMdlT6iVjU5jdE5NgxFQy1zZWNwMjU2azEAAARkZXNjIQK/Tlm4xqPEhRTVPnRfmL/H5S78NdvRZnBvFX/8/cUGZQAA
-  //---- public key info ----
-  //algorithm:      EC-secp256k1
-  //invalid before: null
-  //invalid after:  null
-  //description:    desc
-  //key:            02bf4e59b8c6a3c48514d53e745f98bfc7e52efc35dbd166706f157ffcfdc50665
+  /*
+base64: aCBYJlDWM/L7K1PVwPQmg2iKE6CfmMqyniACL4n/9A3ECUZDDEVDLXNlY3AyNTZrMQAABgFw3N+DzQAJVEVTVC1ST09UIQJGOQlnWCxlbWSIK6zfG6oPnii3UTXR53xejiNYEgL5sgAA
+---- public key info ----
+algorithm:      EC-secp256k1
+create time:    2020-03-15T06:26:40.717Z
+description:    TEST-ROOT
+key:            0246390967582c656d64882bacdf1baa0f9e28b75135d1e77c5e8e23581202f9b2
+   */
 
   @Test
   void generateL2Key() {
-    System.out.println("generate L2 key");
-    String rootKey = "XCEAi86Ov9ZsoBYbUzbJjROu0/VAsRlOoLMdlT6iVjU5jdE5NgxFQy1zZWNwMjU2azEAAARkZXNjIQK/Tlm4xqPEhRTVPnRfmL/H5S78NdvRZnBvFX/8/cUGZQAA";
+    System.out.println("============ generate L2 key ============");
+    String rootKey = "aCBYJlDWM/L7K1PVwPQmg2iKE6CfmMqyniACL4n/9A3ECUZDDEVDLXNlY3AyNTZrMQAABgFw3N+DzQAJVEVTVC1ST09UIQJGOQlnWCxlbWSIK6zfG6oPnii3UTXR53xejiNYEgL5sgAA";
     AsmKeyPair rootKeyPair = AsmKeyPair.readBase64String(rootKey, AsmKeyPair.class);
     Long now = System.currentTimeMillis();
-    AsmKeyPair l2KeyPair = ecc.generateSubKey(rootKeyPair, now, now + 86_400_000L * 7L);
-    System.out.println("   hex: " + l2KeyPair.toHexString());
+    AsmKeyPair l2KeyPair = ecc.generateSubKey(rootKeyPair, AsmPublicKey.preGen().start(now).end(now + 86_400_000L * 7L));
     System.out.println("base64: " + l2KeyPair.toBase64String());
     System.out.println(l2KeyPair.publicKeyChain);
   }
 
   /*
-generate L2 key
-   hex: 817a20222c7ecdad0ba156221bd85ad9ed8ed8b4945dbfa695bd70581fb3e007f09281815743420c45432d736563703235366b31060170d9797314060170fd85f71404646573632103114631b95007376f492faa0076d4b689bf463f3e685a39c786b5f5d3d728e61b580f5348413235367769746845434453414730450220462fcb63d7fdb98f40955622b5a235777c0b0ff0e5388938662d8938c07b963f02210083c0e0e03129b2d8cf42dda7f8902fc004593a7afe7a05f4f7ec29b5130278c639360c45432d736563703235366b31000004646573632102bf4e59b8c6a3c48514d53e745f98bfc7e52efc35dbd166706f157ffcfdc506650000
-base64: gXogIix+za0LoVYiG9ha2e2O2LSUXb+mlb1wWB+z4AfwkoGBV0NCDEVDLXNlY3AyNTZrMQYBcNl5cxQGAXD9hfcUBGRlc2MhAxFGMblQBzdvSS+qAHbUtom/Rj8+aFo5x4a19dPXKOYbWA9TSEEyNTZ3aXRoRUNEU0FHMEUCIEYvy2PX/bmPQJVWIrWiNXd8Cw/w5TiJOGYtiTjAe5Y/AiEAg8Dg4DEpstjPQt2n+JAvwARZOnr+egX09+wptRMCeMY5NgxFQy1zZWNwMjU2azEAAARkZXNjIQK/Tlm4xqPEhRTVPnRfmL/H5S78NdvRZnBvFX/8/cUGZQAA
+base64: ggshALUVXnzPTgJur1laNEzrVVEgFmm1tHZG3rlfBftjFlk+gWdGDEVDLXNlY3AyNTZrMQYBcNzf7P8GAXEA7HD/BgFw3N/s/wAAIQKfDGEyjy93IbCUYSENzzvo9mhidMvWeFEnAGStOGJ151gPU0hBMjU2d2l0aEVDRFNBRzBFAiAR4mbtsFS9wZMsQRHjDs+n1KyLz0VkQ3P3UA+/KiW56QIhAK3uAXXG766XBiM7ZznBMcplkv6Py7du1LijDrWzX+OnRkMMRUMtc2VjcDI1NmsxAAAGAXDc34PNAAlURVNULVJPT1QhAkY5CWdYLGVtZIgrrN8bqg+eKLdRNdHnfF6OI1gSAvmyAAA=
 ---- public key info ----
 algorithm:      EC-secp256k1
-invalid before: null
-invalid after:  null
-description:    desc
-key:            02bf4e59b8c6a3c48514d53e745f98bfc7e52efc35dbd166706f157ffcfdc50665
-
+invalid before: 2020-03-15T06:27:07.647Z
+invalid after:  2020-03-22T06:27:07.647Z
+create time:    2020-03-15T06:27:07.647Z
+key:            029f0c61328f2f7721b09461210dcf3be8f6686274cbd67851270064ad386275e7
+---- signature ----
+algorithm: SHA256withECDSA
+ hex:      3045022011e266edb054bdc1932c4111e30ecfa7d4ac8bcf45644373f7500fbf2a25b9e9022100adee0175c6efae9706233b6739c131ca6592fe8fcbb76ed4b8a30eb5b35fe3a7
+<super key>
 ---- public key info ----
 algorithm:      EC-secp256k1
-invalid before: 2020-03-14T14:36:20.116Z
-invalid after:  2020-03-21T14:36:20.116Z
-description:    desc
-key:            03114631b95007376f492faa0076d4b689bf463f3e685a39c786b5f5d3d728e61b
----- signature info ----
- algorithm: SHA256withECDSA
- hex:       30450220462fcb63d7fdb98f40955622b5a235777c0b0ff0e5388938662d8938c07b963f02210083c0e0e03129b2d8cf42dda7f8902fc004593a7afe7a05f4f7ec29b5130278c6   */
+create time:    2020-03-15T06:26:40.717Z
+description:    TEST-ROOT
+key:            0246390967582c656d64882bacdf1baa0f9e28b75135d1e77c5e8e23581202f9b2
+  */
 
   @Test
   void generateL3Key() {
-    System.out.println("generate L3 key");
-    String L2Key = "817a20222c7ecdad0ba156221bd85ad9ed8ed8b4945dbfa695bd70581fb3e007f09281815743420c45432d736563703235366b31060170d9797314060170fd85f71404646573632103114631b95007376f492faa0076d4b689bf463f3e685a39c786b5f5d3d728e61b580f5348413235367769746845434453414730450220462fcb63d7fdb98f40955622b5a235777c0b0ff0e5388938662d8938c07b963f02210083c0e0e03129b2d8cf42dda7f8902fc004593a7afe7a05f4f7ec29b5130278c639360c45432d736563703235366b31000004646573632102bf4e59b8c6a3c48514d53e745f98bfc7e52efc35dbd166706f157ffcfdc506650000";
-    AsmKeyPair l2KeyPair = AsmKeyPair.readHexString(L2Key, AsmKeyPair.class);
+    System.out.println("============ generate L3 key ============");
+    String L2Key = "ggshALUVXnzPTgJur1laNEzrVVEgFmm1tHZG3rlfBftjFlk+gWdGDEVDLXNlY3AyNTZrMQYBcNzf7P8GAXEA7HD/BgFw3N/s/wAAIQKfDGEyjy93IbCUYSENzzvo9mhidMvWeFEnAGStOGJ151gPU0hBMjU2d2l0aEVDRFNBRzBFAiAR4mbtsFS9wZMsQRHjDs+n1KyLz0VkQ3P3UA+/KiW56QIhAK3uAXXG766XBiM7ZznBMcplkv6Py7du1LijDrWzX+OnRkMMRUMtc2VjcDI1NmsxAAAGAXDc34PNAAlURVNULVJPT1QhAkY5CWdYLGVtZIgrrN8bqg+eKLdRNdHnfF6OI1gSAvmyAAA=";
+    AsmKeyPair l2KeyPair = AsmKeyPair.readBase64String(L2Key, AsmKeyPair.class);
     Long now = System.currentTimeMillis();
-    AsmKeyPair l3KeyPair = ecc.generateSubKey(l2KeyPair, now, now + 86_400_000L);
+    AsmKeyPair l3KeyPair = ecc.generateSubKey(l2KeyPair, AsmPublicKey.preGen().start(now).end(now + 86_400_000L));
     System.out.println("base64: " + l3KeyPair.toBase64String());
     System.out.println(l3KeyPair.publicKeyChain);
   }

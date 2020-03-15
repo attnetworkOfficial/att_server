@@ -235,15 +235,18 @@ public class ECCrypto implements EncryptAsymmetric, Encrypt {
     }
   }
 
+
   public AsmKeyPair generateRootKey() {
-    return generateSubKey(null, null, null);
+    return generateSubKey(null, AsmPublicKey.preGen());
   }
 
-  public AsmKeyPair generateSubKey(AsmKeyPair superKeyPair, Long start, Long end) {
+  public AsmKeyPair generateSubKey(AsmKeyPair superKeyPair, AsmPublicKey preGen) {
     ECKeyPair geneKeyPair = generateKeyPair();
     // setup validations
     AsmPublicKeyChain pubKeyChain = new AsmPublicKeyChain();
-    pubKeyChain.key = wrapPublicKey(geneKeyPair, start, end);
+    pubKeyChain.key = preGen
+        .algorithm(algorithm + "-" + paramName)
+        .data(geneKeyPair.getPublicKey().getQ().getEncoded(true));
     if (superKeyPair != null) {
       if (!superKeyPair.publicKeyChain.key.isValidTimestamp()) {
         throw new AException("superKeyPair time invalid");
@@ -257,16 +260,6 @@ public class ECCrypto implements EncryptAsymmetric, Encrypt {
     keyPair.privateKey = geneKeyPair.getPrivateKey().getD().toByteArray();
     keyPair.publicKeyChain = pubKeyChain;
     return keyPair;
-  }
-
-  private AsmPublicKey wrapPublicKey(ECKeyPair keyPair, Long start, Long end) {
-    AsmPublicKey pub = new AsmPublicKey();
-    pub.algorithm = algorithm + "-" + paramName;
-    pub.startTimestamp = start;
-    pub.endTimestamp = end;
-    pub.desc = "desc";
-    pub.data = keyPair.getPublicKey().getQ().getEncoded(true);
-    return pub;
   }
 
   public ECKeyPair restoreKeyPair(String hexString) {

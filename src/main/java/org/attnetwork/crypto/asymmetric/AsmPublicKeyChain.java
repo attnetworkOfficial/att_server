@@ -11,12 +11,12 @@ public final class AsmPublicKeyChain extends AbstractSeqLanObject {
   @Override
   public String toString() {
     String s = "";
-    if (superKey != null) {
-      s += superKey.toString() + "\n\n";
-    }
     s += key.toString();
     if (sign != null) {
       s += "\n" + sign.toString();
+    }
+    if (superKey != null) {
+      s += "\n<super key>\n" + superKey.toString();
     }
     return s;
   }

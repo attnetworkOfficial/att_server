@@ -6,78 +6,18 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
-import org.attnetwork.exception.AException;
 
 class SeqLanObjWriter {
 
-  static byte[] toByteArray(AbstractSeqLanObject msg) {
-    try {
-      ByteArrayOutputStream cache = new ByteArrayOutputStream();
-      byte[] data = wrap(msg).doFinal();
-      SeqLan.writeLengthData(cache, data);
-      return cache.toByteArray();
-    } catch (Exception e) {
-      throw AException.wrap(e);
-    }
-  }
-
-  private final ByteArrayOutputStream cache;
-  private final Object value;
-
-  private SeqLanObjWriter(Object value) {
-    this.cache = new ByteArrayOutputStream();
-    this.value = value;
-  }
-
-  private static SeqLanObjWriter wrap(Object object) {
-    return new SeqLanObjWriter(object);
-  }
-
-  private byte[] doFinal() throws Exception {
+  static byte[] toByteArray(Object value) throws Exception {
     if (value == null) {
-      return null;
+      return new byte[0];
     }
-    switch (SeqLanDataType.getFieldType(value)) {
-      case OBJECT:
-        AbstractSeqLanObject msg = (AbstractSeqLanObject) value;
-        if (msg.raw != null) {
-          // already done
-          return msg.raw;
-        }
-        for (Field field : value.getClass().getFields()) {
-          writeCache(field.get(value));
-        }
-        break;
-      case LIST:
-        for (Object element : (List<?>) value) {
-          writeCache(element);
-        }
-        break;
-      case ARRAY:
-        for (Object element : (Object[]) value) {
-          writeCache(element);
-        }
-        break;
-      default:
-        throw new IllegalAccessException("can't do final for: " + value);
-    }
-    return cache.toByteArray();
-  }
-
-  private void writeCache(Object value) throws Exception {
-    if (value == null) {
-      SeqLan.writeVarInt(cache, 0);
-    } else {
-      SeqLan.writeLengthData(cache, toByteArray(value));
-    }
-  }
-
-  private static byte[] toByteArray(Object value) throws Exception {
     switch (SeqLanDataType.getFieldType(value)) {
       case OBJECT:
       case ARRAY:
       case LIST:
-        return wrap(value).doFinal();
+        return multiToByteArray(value);
       case RAW:
         return (byte[]) value;
       case INTEGER:
@@ -93,6 +33,35 @@ class SeqLanObjWriter {
       default:
         throw new IllegalArgumentException("unsupported class: " + value.getClass().getSimpleName());
     }
+  }
+
+  private static byte[] multiToByteArray(Object value) throws Exception {
+    ByteArrayOutputStream cache = new ByteArrayOutputStream();
+    switch (SeqLanDataType.getFieldType(value)) {
+      case OBJECT:
+        AbstractSeqLanObject msg = (AbstractSeqLanObject) value;
+        if (msg.raw != null) {
+          msg.writeWithoutLen(cache);
+        } else {
+          for (Field field : msg.getClass().getFields()) {
+            SeqLan.writeLengthData(cache, toByteArray(field.get(msg)));
+          }
+        }
+        break;
+      case LIST:
+        for (Object element : (List<?>) value) {
+          SeqLan.writeLengthData(cache, toByteArray(element));
+        }
+        break;
+      case ARRAY:
+        for (Object element : (Object[]) value) {
+          SeqLan.writeLengthData(cache, toByteArray(element));
+        }
+        break;
+      default:
+        throw new IllegalAccessException("can't do final for: " + value);
+    }
+    return cache.toByteArray();
   }
 
   private static byte[] bigDecimalToByteArray(BigDecimal value) throws IOException {

@@ -5,6 +5,7 @@ import java.util.concurrent.CountDownLatch;
 import org.attnetwork.crypto.ECCrypto;
 import org.attnetwork.crypto.ECKeyPair;
 import org.attnetwork.crypto.asymmetric.AsmKeyPair;
+import org.attnetwork.crypto.asymmetric.AsmPublicKey;
 import org.attnetwork.crypto.asymmetric.AsmPublicKeyChain;
 import org.attnetwork.utils.HashUtil;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
@@ -124,20 +125,20 @@ class ECCryptoTest {
     byte[] rootPublicKey = rootKeyPair.publicKeyChain.key.data;
     Long now = System.currentTimeMillis();
 
-    AsmKeyPair l2KeyPair = ecc.generateSubKey(rootKeyPair, now, now + 10_000L);
+    AsmKeyPair l2KeyPair = ecc.generateSubKey(rootKeyPair, AsmPublicKey.preGen().start(now).end(now + 10_000L));
     AsmPublicKeyChain.Validation validation = l2KeyPair.publicKeyChain.isValid(rootPublicKey, ecc);
     Assert.isTrue(validation.isValid, "l2 verify fail: " + validation);
 
-    AsmKeyPair l3KeyPair = ecc.generateSubKey(l2KeyPair, now, now + 1_000L);
+    AsmKeyPair l3KeyPair = ecc.generateSubKey(l2KeyPair, AsmPublicKey.preGen().start(now).end(now + 1_000L));
     validation = l3KeyPair.publicKeyChain.isValid(rootPublicKey, ecc);
     Assert.isTrue(validation.isValid, "l3 verify fail: " + validation);
 
-    AsmKeyPair l4KeyPair = ecc.generateSubKey(l3KeyPair, now, now - 1L);
+    AsmKeyPair l4KeyPair = ecc.generateSubKey(l3KeyPair, AsmPublicKey.preGen().start(now).end(now - 1L));
     validation = l4KeyPair.publicKeyChain.isValid(rootPublicKey, ecc);
     Assert.isTrue(!validation.isValid, "l4 expire fail");
 
     // recreate l4 key pair
-    l4KeyPair = ecc.generateSubKey(l3KeyPair, now, now + 1_000L);
+    l4KeyPair = ecc.generateSubKey(l3KeyPair, AsmPublicKey.preGen().start(now).end(now + 1_000L));
     validation = l4KeyPair.publicKeyChain.isValid(rootPublicKey, ecc);
     Assert.isTrue(validation.isValid, "l4 verify fail: " + validation);
 

@@ -8,17 +8,62 @@ public final class AsmPublicKey extends AbstractSeqLanObject {
   public String algorithm;
   public Long startTimestamp;
   public Long endTimestamp;
+  public Long createTimestamp;
+  /**
+   * The {@code proof} is something that can prove the {@code createTimestamp} of this key.
+   * For example, the newest Bitcoin block hash when creating the key.
+   */
+  public String proof;
   public String desc;
   public byte[] data;
+
+  public static AsmPublicKey preGen() {
+    AsmPublicKey s = new AsmPublicKey();
+    s.createTimestamp = System.currentTimeMillis();
+    return s;
+  }
+
+  public AsmPublicKey algorithm(String algorithm) {
+    this.algorithm = algorithm;
+    return this;
+  }
+
+  public AsmPublicKey start(Long start) {
+    this.startTimestamp = start;
+    return this;
+  }
+
+  public AsmPublicKey end(Long end) {
+    this.endTimestamp = end;
+    return this;
+  }
+
+  public AsmPublicKey proof(String proof) {
+    this.proof = proof;
+    return this;
+  }
+
+  public AsmPublicKey desc(String desc) {
+    this.desc = desc;
+    return this;
+  }
+
+  public AsmPublicKey data(byte[] data) {
+    this.data = data;
+    return this;
+  }
+
 
   @Override
   public String toString() {
     return "---- public key info ----" +
-           "\nalgorithm:      " + algorithm +
-           "\ninvalid before: " + DateUtil.toHumanString(startTimestamp) +
-           "\ninvalid after:  " + DateUtil.toHumanString(endTimestamp) +
-           "\ndescription:    " + desc +
-           "\nkey:            " + ByteUtils.toHexString(data);
+           (algorithm      /**/ == null ? "" : "\nalgorithm:      " + algorithm) +
+           (startTimestamp /**/ == null ? "" : "\ninvalid before: " + DateUtil.toHumanString(startTimestamp)) +
+           (endTimestamp   /**/ == null ? "" : "\ninvalid after:  " + DateUtil.toHumanString(endTimestamp)) +
+           (createTimestamp/**/ == null ? "" : "\ncreate time:    " + DateUtil.toHumanString(createTimestamp)) +
+           (proof          /**/ == null ? "" : "\nproof:          " + proof) +
+           (desc           /**/ == null ? "" : "\ndescription:    " + desc) +
+           (data           /**/ == null ? "" : "\nkey:            " + ByteUtils.toHexString(data));
   }
 
 
