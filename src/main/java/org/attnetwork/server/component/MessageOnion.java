@@ -25,7 +25,7 @@ public class MessageOnion {
 
   public static MessageOnion write(String type, AbstractSeqLanObject msg) {
     MessageOnion process = new MessageOnion();
-    process.typedMsg = wrapTypedMsg(type, msg);
+    process.wrappedMsg = WrappedMsg.wrap(null, wrapTypedMsg(type, msg));
     return process;
   }
 
@@ -38,6 +38,10 @@ public class MessageOnion {
 
   public byte[] getProcessingMsgData() {
     return wrappedMsg == null ? typedMsg.data : wrappedMsg.data;
+  }
+
+  public AbstractSeqLanObject getProcessingMsg() {
+    return wrappedMsg == null ? typedMsg : wrappedMsg;
   }
 
   public WrappedMsg getWrappedMsg() {
@@ -62,7 +66,7 @@ public class MessageOnion {
 
   public void checkWrapTypes(List<WrapType> list) {
     if (!list.equals(wrapTypes)) {
-      throw new AException("unexpected wrap types: " + wrapTypes + ", requiring types:" + list);
+      throw new AException("unexpected wrap types: " + wrapTypes + ", requiring types: " + list);
     }
   }
 
@@ -79,7 +83,7 @@ public class MessageOnion {
   }
 
   public void readTypedMsgFromWrappedMsg() {
-    typedMsg = unwrapMsg(TypedMsg.class);
+    typedMsg = AbstractSeqLanObject.read(wrappedMsg.data, TypedMsg.class);
   }
 
   public <T extends AbstractSeqLanObject> T readTypedMsg(Class<T> type) {

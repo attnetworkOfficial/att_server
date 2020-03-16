@@ -45,17 +45,19 @@ public class MessageServiceImpl implements MessageService {
       unwrap(process);
       String msgType = process.getMsgType();
       switch (msgType) {
-        case TypedMsg.START_SESSION:
+        case "start_session":
           process.checkWrapTypes(WrapType.L_SIGN_ENCRYPT);
           SessionStartMsgResp resp = sessionService.startSession(
               process.readTypedMsg(SessionStartMsg.class), process.getSigner());
           process = wrap(null, resp, process.getSigner(), WrapType.L_ENCRYPT_SIGN);
           break;
+        case "null":
         default:
           throw new AException("unsupported message type: " + msgType);
       }
       process.getWrappedMsg().write(os);
     } catch (Exception e) {
+      log.error("", e);
       exceptionHandle(e, os);
     }
   }
@@ -91,7 +93,8 @@ public class MessageServiceImpl implements MessageService {
     return process;
   }
 
-  private void unwrap(MessageOnion process) {
+  @Override
+  public void unwrap(MessageOnion process) {
     WrapType wrapType;
     while ((wrapType = process.getWrapType()) != null) {
       switch (wrapType) {
@@ -120,11 +123,12 @@ public class MessageServiceImpl implements MessageService {
 
   // ----------------------------------------------------------------------------------------
   private void sign(MessageOnion process) {
-    byte[] data = process.getProcessingMsgData();
+    byte[] data = process.getProcessingMsg().getRaw();
     SignedMsg signedMsg = new SignedMsg();
     signedMsg.data = data;
     signedMsg.sign = encryptService.ecSign(data);
     signedMsg.publicKeyChain = encryptService.getPublicKeyChain();
+
     process.wrapMsg(WrapType.SIGN, signedMsg);
   }
 
@@ -140,20 +144,24 @@ public class MessageServiceImpl implements MessageService {
     if (!validSign) {
       throw new AException("message sign error");
     }
+
     process.addSigner(signedMsg.publicKeyChain);
+
     process.loadWrappedData(signedMsg.data);
   }
 
   // ----------------------------------------------------------------------------------------
+  private void encrypt(MessageOnion process) {
+    byte[] data = process.getProcessingMsg().getRaw();
+    EncryptedData encryptedData = encryptService.ecEncrypt(process.getSigner().key, data);
+
+    process.wrapMsg(WrapType.ENCRYPT, encryptedData);
+  }
+
   private void decrypt(MessageOnion process) {
     EncryptedData encryptedData = process.unwrapMsg(EncryptedData.class);
     byte[] decrypted = encryptService.ecDecrypt(process.getSigner().key, encryptedData.data);
-    process.loadWrappedData(decrypted);
-  }
 
-  private void encrypt(MessageOnion process) {
-    byte[] data = process.getProcessingMsgData();
-    EncryptedData encryptedData = encryptService.ecEncrypt(process.getSigner().key, data);
-    process.wrapMsg(WrapType.ENCRYPT, encryptedData);
+    process.loadWrappedData(decrypted);
   }
 }

@@ -11,4 +11,6 @@ public interface MessageService {
   void process(InputStream is, OutputStream os);
 
   MessageOnion wrap(String type, AbstractSeqLanObject msg, AsmPublicKeyChain signer, List<WrapType> wrapTypes);
+
+  void unwrap(MessageOnion process);
 }
