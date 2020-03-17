@@ -9,9 +9,9 @@ public final class AsmSignature extends AbstractSeqLanObject {
 
   @Override
   public String toString() {
-    return "---- signature ----" +
-           (algorithm /**/ == null ? "" : "\nalgorithm: " + algorithm) +
-           (data      /**/ == null ? "" : "\n hex:      " +  ByteUtils.toHexString(data));
+    return "├ signature ────────────────────" +
+           (algorithm /**/ == null ? "" : "\n│ algorithm: " + algorithm) +
+           (data      /**/ == null ? "" : "\n└ hex:       " +  ByteUtils.toHexString(data));
   }
 
   public static AsmSignature build(String algorithm, byte[] raw) {

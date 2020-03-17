@@ -14,9 +14,18 @@ public final class AsmPublicKeyChain extends AbstractSeqLanObject {
     s += key.toString();
     if (sign != null) {
       s += "\n" + sign.toString();
+    } else {
+      s += "\n└───────────────────────────────";
     }
+    int d = 0;
     if (superKey != null) {
-      s += "\n<super key>\n" + superKey.toString();
+      ++d;
+      StringBuilder rep = new StringBuilder();
+      for (int i = 0; i < d; i++) {
+        rep.append("  ");
+      }
+      rep.append("$1");
+      s += ("\n└ \uD83D\uDD17 " + (superKey.superKey == null ? "ROOT KEY \uD83D\uDD0F" : "SUPER KEY \uD83D\uDD12") + "\n" + superKey.toString()).replaceAll("(.+)", rep.toString());
     }
     return s;
   }
@@ -27,6 +36,37 @@ public final class AsmPublicKeyChain extends AbstractSeqLanObject {
       root = root.superKey;
     }
     return root.key;
+  }
+
+  public void makePublicKeyTimeStampReasonable() {
+    key.startTimestamp = maxStartTimestamp();
+    key.endTimestamp = minEndTimestamp();
+  }
+
+  public Long maxStartTimestamp() {
+    Long s = key.startTimestamp;
+    AsmPublicKeyChain superKey = this.superKey;
+    while (superKey != null) {
+      Long ss = superKey.key.startTimestamp;
+      if (ss != null) {
+        s = s == null ? ss : Math.max(ss, s);
+      }
+      superKey = superKey.superKey;
+    }
+    return s;
+  }
+
+  public Long minEndTimestamp() {
+    Long e = key.endTimestamp;
+    AsmPublicKeyChain superKey = this.superKey;
+    while (superKey != null) {
+      Long se = superKey.key.endTimestamp;
+      if (se != null) {
+        e = e == null ? se : Math.min(se, e);
+      }
+      superKey = superKey.superKey;
+    }
+    return e;
   }
 
   public Validation isValid(EncryptAsymmetric encrypt) {

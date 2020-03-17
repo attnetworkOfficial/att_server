@@ -249,12 +249,13 @@ public class ECCrypto implements EncryptAsymmetric, Encrypt {
         .data(geneKeyPair.getPublicKey().getQ().getEncoded(true));
     if (superKeyPair != null) {
       if (!superKeyPair.publicKeyChain.key.isValidTimestamp()) {
-        throw new AException("superKeyPair time invalid");
+        throw new AException("the timestamp of the superKeyPair.publicKey is invalid");
       }
+      pubKeyChain.superKey = superKeyPair.publicKeyChain;
+      pubKeyChain.makePublicKeyTimeStampReasonable();
       // sign with super key
       byte[] publicKey = pubKeyChain.key.getRaw();
       pubKeyChain.sign = sign(restorePrivateKey(superKeyPair.privateKey), publicKey);
-      pubKeyChain.superKey = superKeyPair.publicKeyChain;
     }
     AsmKeyPair keyPair = new AsmKeyPair();
     keyPair.privateKey = geneKeyPair.getPrivateKey().getD().toByteArray();

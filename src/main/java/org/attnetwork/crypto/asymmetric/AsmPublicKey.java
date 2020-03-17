@@ -56,14 +56,14 @@ public final class AsmPublicKey extends AbstractSeqLanObject {
 
   @Override
   public String toString() {
-    return "---- public key info ----" +
-           (algorithm      /**/ == null ? "" : "\nalgorithm:      " + algorithm) +
-           (startTimestamp /**/ == null ? "" : "\ninvalid before: " + DateUtil.toHumanString(startTimestamp)) +
-           (endTimestamp   /**/ == null ? "" : "\ninvalid after:  " + DateUtil.toHumanString(endTimestamp)) +
-           (createTimestamp/**/ == null ? "" : "\ncreate time:    " + DateUtil.toHumanString(createTimestamp)) +
-           (proof          /**/ == null ? "" : "\nproof:          " + proof) +
-           (desc           /**/ == null ? "" : "\ndescription:    " + desc) +
-           (data           /**/ == null ? "" : "\nkey:            " + ByteUtils.toHexString(data));
+    return "┌ public key info ──────────────" +
+           (algorithm      /**/ == null ? "" : "\n│ algorithm:      " + algorithm) +
+           (startTimestamp /**/ == null ? "" : "\n│ invalid before: " + DateUtil.toHumanString(startTimestamp)) +
+           (endTimestamp   /**/ == null ? "" : "\n│ invalid after:  " + DateUtil.toHumanString(endTimestamp)) +
+           (createTimestamp/**/ == null ? "" : "\n│ create time:    " + DateUtil.toHumanString(createTimestamp)) +
+           (proof          /**/ == null ? "" : "\n│ proof:          " + proof) +
+           (desc           /**/ == null ? "" : "\n│ description:    " + desc) +
+           (data           /**/ == null ? "" : "\n│ key:            " + ByteUtils.toHexString(data));
   }
 
 
