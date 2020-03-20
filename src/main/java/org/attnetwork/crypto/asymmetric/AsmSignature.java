@@ -11,7 +11,7 @@ public final class AsmSignature extends AbstractSeqLanObject {
   public String toString() {
     return "├ signature ────────────────────" +
            (algorithm /**/ == null ? "" : "\n│ algorithm: " + algorithm) +
-           (data      /**/ == null ? "" : "\n└ hex:       " +  ByteUtils.toHexString(data));
+           (data      /**/ == null ? "" : "\n└ hex:       " + ByteUtils.toHexString(data));
   }
 
   public static AsmSignature build(String algorithm, byte[] raw) {

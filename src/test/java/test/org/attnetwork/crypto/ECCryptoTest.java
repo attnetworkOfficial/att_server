@@ -37,7 +37,7 @@ class ECCryptoTest {
 
   @Test
   void testSign() throws InterruptedException {
-    int round = 3, thread = 1;
+    int round = 33, thread = 3;
     CountDownLatch countDownLatch = new CountDownLatch(round * thread);
     for (int i = 0; i < thread; i++) {
       new Thread(() -> testSignVerify(round, countDownLatch)).start();
@@ -61,7 +61,6 @@ class ECCryptoTest {
 
 
       byte[] sign2 = ecc.sign(privateKey, data).data;
-      log.debug("r:{} s:{}\ns2:{}", sign[0].toString(16), sign[1].toString(16), ByteUtils.toHexString(sign2));
 
       int v = ecc.generateSignV(publicKey.getQ(), sign, data);
       verify = ecc.verify(v, sign, data);
@@ -107,13 +106,11 @@ class ECCryptoTest {
 
     byte[] origin = new byte[1000];
     byte[] encrypt = ecc.encrypt(new IEKeySpec(alice.getPrivateKey(), bob.getPublicKey()), origin).data;
-    System.out.println(ByteUtils.toHexString(encrypt));
     byte[] decrypt = ecc.decrypt(new IEKeySpec(bob.getPrivateKey(), alice.getPublicKey()), encrypt);
 
     Assert.isTrue(ByteUtils.equals(origin, decrypt), "fail");
 
     encrypt = ecc.encrypt(alice.getPublicKey(), origin).data;
-    System.out.println(ByteUtils.toHexString(encrypt));
     decrypt = ecc.decrypt(alice.getPrivateKey(), encrypt);
 
     Assert.isTrue(ByteUtils.equals(origin, decrypt), "fail");

@@ -1,6 +1,8 @@
 package org.attnetwork.server.component;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import org.attnetwork.crypto.asymmetric.AsmPublicKeyChain;
@@ -12,32 +14,33 @@ import org.attnetwork.proto.sl.AbstractSeqLanObject;
 
 public class MessageOnion {
   private TypedMsg typedMsg;
-
   private List<WrapType> wrapTypes;
   private WrappedMsg wrappedMsg;
   private AsmPublicKeyChain signer;
+  private Integer sessionId;
 
-  public static MessageOnion read(InputStream is) {
-    MessageOnion process = new MessageOnion();
-    process.wrappedMsg = AbstractSeqLanObject.read(is, WrappedMsg.class);
-    return process;
+  public static MessageOnion irrigation(InputStream is) {
+    MessageOnion onion = new MessageOnion();
+    onion.wrappedMsg = AbstractSeqLanObject.read(is, WrappedMsg.class);
+    return onion;
   }
 
-  public static MessageOnion write(String type, AbstractSeqLanObject msg) {
-    MessageOnion process = new MessageOnion();
-    process.wrappedMsg = WrappedMsg.wrap(null, wrapTypedMsg(type, msg));
-    return process;
+  public static MessageOnion sow(String type, AbstractSeqLanObject msg) {
+    return new MessageOnion().revive(type, msg);
   }
 
-  public static TypedMsg wrapTypedMsg(String type, AbstractSeqLanObject msg) {
-    TypedMsg typedResp = new TypedMsg();
-    typedResp.type = type;
-    typedResp.data = msg.getRaw();
-    return typedResp;
+  public MessageOnion revive(AbstractSeqLanObject msg) {
+    return revive(null, msg);
   }
 
-  public byte[] getProcessingMsgData() {
-    return wrappedMsg == null ? typedMsg.data : wrappedMsg.data;
+  public MessageOnion revive(String type, AbstractSeqLanObject msg) {
+    core(type, msg);
+    wrap(null, typedMsg);
+    return this;
+  }
+
+  public void harvest(OutputStream os) throws IOException {
+    wrappedMsg.write(os);
   }
 
   public AbstractSeqLanObject getProcessingMsg() {
@@ -52,8 +55,14 @@ public class MessageOnion {
     wrappedMsg = AbstractSeqLanObject.read(data, WrappedMsg.class);
   }
 
-  public void wrapMsg(WrapType wrapType, AbstractSeqLanObject msg) {
+  public MessageOnion core(String type, AbstractSeqLanObject msg) {
+    typedMsg = TypedMsg.wrap(type, msg);
+    return this;
+  }
+
+  public MessageOnion wrap(WrapType wrapType, AbstractSeqLanObject msg) {
     wrappedMsg = WrappedMsg.wrap(wrapType, msg);
+    return this;
   }
 
   public <T extends AbstractSeqLanObject> T unwrapMsg(Class<T> type) {
@@ -70,12 +79,17 @@ public class MessageOnion {
     }
   }
 
-  public WrapType getWrapType() {
-    return wrappedMsg == null || wrappedMsg.wrapType == null ? null : WrapType.getByCode(wrappedMsg.wrapType);
+  public MessageOnion setWrapTypes(List<WrapType> wrapTypes) {
+    this.wrapTypes = wrapTypes;
+    return this;
   }
 
-  public void addSigner(AsmPublicKeyChain signer) {
-    this.signer = signer;
+  public List<WrapType> getWrapTypes() {
+    return wrapTypes;
+  }
+
+  public WrapType getWrapType() {
+    return wrappedMsg == null || wrappedMsg.wrapType == null ? null : WrapType.getByCode(wrappedMsg.wrapType);
   }
 
   public String getMsgType() {
@@ -94,7 +108,17 @@ public class MessageOnion {
     return signer;
   }
 
-  public void setSigner(AsmPublicKeyChain signer) {
+  public MessageOnion setSigner(AsmPublicKeyChain signer) {
     this.signer = signer;
+    return this;
+  }
+
+  public Integer getSessionId() {
+    return sessionId;
+  }
+
+  public MessageOnion setSessionId(Integer sessionId) {
+    this.sessionId = sessionId;
+    return this;
   }
 }

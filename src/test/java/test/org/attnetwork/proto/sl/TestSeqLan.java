@@ -7,14 +7,11 @@ import java.math.BigDecimal;
 import org.attnetwork.proto.sl.AbstractSeqLanObject;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 import test.org.attnewtork.proto.msg.ExampleUserContactMsg;
 import test.org.attnewtork.proto.msg.ExampleUserMsg;
 
 class TestSeqLan {
-  private Logger logger = LoggerFactory.getLogger(getClass());
 
   @Test
   void testExampleMsg() throws IOException {

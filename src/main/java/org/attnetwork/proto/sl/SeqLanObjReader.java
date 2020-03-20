@@ -17,7 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 class SeqLanObjReader {
-  private static Logger log = LoggerFactory.getLogger(SeqLanObjReader.class);
+  private static final Logger log = LoggerFactory.getLogger(SeqLanObjReader.class);
 
   static <T extends AbstractSeqLanObject> T read(InputStream source, Class<T> msgType) {
     try {

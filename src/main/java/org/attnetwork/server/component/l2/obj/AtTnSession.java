@@ -1,11 +1,15 @@
 package org.attnetwork.server.component.l2.obj;
 
 import org.attnetwork.crypto.asymmetric.AsmPublicKeyChain;
+import org.attnetwork.proto.attn.AttnProto;
 
 public class AtTnSession {
-  public String algorithm;
-  public Integer sessionId;
+  public AttnProto proto;
+  public Integer id;
   public byte[] sharedSecret;
+  public byte[] salt;
+  public byte[] oldSalt;
+  public long saltTimestamp;
   public AsmPublicKeyChain userPublicKeyChain;
   public long createTimestamp;
   public long lastActiveTime;

@@ -16,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class AbstractSeqLanObject {
-  private Logger log = LoggerFactory.getLogger(getClass());
+  private static final Logger log = LoggerFactory.getLogger(AbstractSeqLanObject.class);
 
   private int dataLengthLen;
   byte[] raw;

@@ -30,6 +30,16 @@ public final class AsmPublicKeyChain extends AbstractSeqLanObject {
     return s;
   }
 
+  public int chainLength() {
+    int l = 0;
+    AsmPublicKeyChain superKey = this.superKey;
+    while (superKey != null) {
+      l++;
+      superKey = superKey.superKey;
+    }
+    return l;
+  }
+
   public AsmPublicKey rootKey() {
     AsmPublicKeyChain root = this;
     while (root.superKey != null) {
