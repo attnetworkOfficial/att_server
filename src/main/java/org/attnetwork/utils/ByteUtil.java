@@ -19,4 +19,10 @@ public class ByteUtil {
     }
     return result;
   }
+
+  public static byte[] subArray(byte[] src, int start, int len) {
+    byte[] sub = new byte[len];
+    System.arraycopy(src, start, sub, 0, len);
+    return sub;
+  }
 }

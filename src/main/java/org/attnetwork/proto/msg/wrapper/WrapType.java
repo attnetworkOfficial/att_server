@@ -2,6 +2,7 @@ package org.attnetwork.proto.msg.wrapper;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -10,6 +11,7 @@ public enum WrapType {
   SIGN(0x04),
   ENCRYPT(0x08);
 
+  public static final List<WrapType> L_ATTN_PROTO = Collections.singletonList(WrapType.ATTN_PROTO);
   public static final List<WrapType> L_ENCRYPT_SIGN = Arrays.asList(WrapType.ENCRYPT, WrapType.SIGN);
   public static final List<WrapType> L_SIGN_ENCRYPT = Arrays.asList(WrapType.SIGN, WrapType.ENCRYPT);
 

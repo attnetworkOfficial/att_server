@@ -3,7 +3,7 @@ package org.attnetwork.proto.sl;
 import java.io.IOException;
 import java.io.OutputStream;
 
-abstract class SeqLan {
+public abstract class SeqLan {
   static final String RAW = "raw";
   static final String NUMBER = "number";
   static final String DECIMAL = "decimal";
@@ -27,7 +27,7 @@ abstract class SeqLan {
     os.write((varInt) & 0x7F);
   }
 
-  static int varIntLength(int varInt) {
+  public static int varIntLength(int varInt) {
     if (varInt >= 0x80) {
       if (varInt >= 0x4000) {
         if (varInt >= 0x200000) {

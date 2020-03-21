@@ -7,13 +7,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.attnetwork.crypto.asymmetric.AsmPublicKey;
 import org.attnetwork.crypto.asymmetric.AsmPublicKeyChain;
 import org.attnetwork.exception.AException;
-import org.attnetwork.proto.attn.AttnProto;
+import org.attnetwork.proto.attn.AtTnProto;
 import org.attnetwork.proto.msg.SessionStartMsg;
 import org.attnetwork.proto.msg.SessionStartMsgResp;
+import org.attnetwork.proto.msg.wrapper.AtTnEncryptedMsg;
+import org.attnetwork.proto.msg.wrapper.AtTnOriginMsg;
 import org.attnetwork.server.component.MessageOnion;
 import org.attnetwork.server.component.l2.SessionServiceL2;
 import org.attnetwork.server.component.l2.obj.AtTnSession;
-import org.attnetwork.utils.HashUtil;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -24,9 +25,9 @@ public class SessionServiceL2Impl implements SessionServiceL2 {
   private final SecureRandom secureRandom = new SecureRandom();
 
   @Override
-  public void startSession(MessageOnion onion) {
+  public SessionStartMsgResp startSession(MessageOnion onion) {
     SessionStartMsg msg = onion.readTypedMsg(SessionStartMsg.class);
-    AttnProto proto = AttnProto.getByVersion(msg.attnVersion);
+    AtTnProto proto = AtTnProto.getByVersion(msg.attnVersion);
     if (proto == null) {
       throw new AException("unsupported ATTN protocol version: " + msg.attnVersion);
     }
@@ -34,66 +35,65 @@ public class SessionServiceL2Impl implements SessionServiceL2 {
       throw new AException("client's random is too short");
     }
     byte[] serverRandom = randomBytes(proto.SESSION_START_RANDOM_SIZE);
-    byte[] sharedSecret = HashUtil.sha512(msg.random, serverRandom);
-    AtTnSession session = createSession(proto, sharedSecret, onion.getSigner());
-    saveUserToSessionIdMap(session);
-    generateSessionIdAndSave(session);
+    AtTnSession session = createSession(proto, msg.random, serverRandom, onion.getSigner());
 
-    onion.revive(createStartSessionResp(serverRandom, session));
+    return createStartSessionResp(serverRandom, session);
   }
 
-  private AtTnSession createSession(AttnProto proto, byte[] sharedSecret, AsmPublicKeyChain publicKeyChain) {
-    AtTnSession session = new AtTnSession();
-    session.proto = proto;
-    session.sharedSecret = sharedSecret;
-    session.userPublicKeyChain = publicKeyChain;
-    session.createTimestamp = System.currentTimeMillis();
-    session.lastActiveTime = System.currentTimeMillis();
-    session.saltTimestamp = 0L;
-    generateSessionSalt(session);
+  @Override
+  public AtTnEncryptedMsg atTnEncrypt(byte[] data, Integer sessionId) {
+    return getSession(sessionId).encrypt(data);
+  }
+
+  @Override
+  public AtTnOriginMsg atTnDecrypt(AtTnEncryptedMsg encryptedMsg) {
+    return getSession(encryptedMsg.sessionId).decrypt(encryptedMsg);
+  }
+
+  private AtTnSession getSession(Integer id) {
+    if (id == null) {
+      throw new AException("session id is null");
+    }
+    AtTnSession session = sessionMap.get(id);
+    if (session == null) {
+      throw new AException("session not exists, id:" + id);
+    }
     return session;
   }
 
-  private void generateSessionSalt(AtTnSession session) {
-    long now = System.currentTimeMillis();
-    if (session.saltTimestamp < now) {
-      byte[] newSalt = randomBytes(session.proto.SERVER_SALT_SIZE);
-      session.oldSalt = session.salt;
-      session.salt = newSalt;
-      session.saltTimestamp = now + session.proto.SERVER_SALT_UPDATE_TIME;
-    }
-  }
-
-  private void generateSessionIdAndSave(AtTnSession session) {
-    while (true) {
-      int sessionId = secureRandom.nextInt();
-      AtTnSession old = sessionMap.put(sessionId, session);
-      if (old == null) {
-        session.id = sessionId;
-        return;
-      }
-      // if sessionId collides with an old one, regenerate it;
-      sessionMap.put(sessionId, old); // put it back
-    }
-  }
-
-  private void saveUserToSessionIdMap(AtTnSession session) {
-    AsmPublicKey userRootKey = session.userPublicKeyChain.rootKey();
-    List<AtTnSession> list = userToSessionIdMap.computeIfAbsent(userRootKey, k -> new ArrayList<>());
+  private AtTnSession createSession(AtTnProto proto, byte[] clientRandom, byte[] serverRandom, AsmPublicKeyChain publicKeyChain) {
+    List<AtTnSession> list = userToSessionIdMap.computeIfAbsent(publicKeyChain.rootKey(), k -> new ArrayList<>());
+    AtTnSession session = new AtTnSession();
     synchronized (list) {
       if (list.size() >= SESSION_LIMIT) {
         throw new AException("exceed session limit");
       }
       list.add(session);
     }
+    int sessionId = generateSessionIdAndSave(session);
+    session.init(sessionId, proto, clientRandom, serverRandom, publicKeyChain);
+    return session;
   }
+
+  private int generateSessionIdAndSave(AtTnSession session) {
+    while (true) {
+      int sessionId = secureRandom.nextInt();
+      AtTnSession old = sessionMap.put(sessionId, session);
+      if (old == null) {
+        return sessionId;
+      }
+      // if sessionId collides with an old one, regenerate it;
+      sessionMap.put(sessionId, old); // put it back
+    }
+  }
+
 
   private SessionStartMsgResp createStartSessionResp(byte[] serverRandom, AtTnSession session) {
     SessionStartMsgResp resp = new SessionStartMsgResp();
-    resp.version = "default";
-    resp.sessionId = session.id;
+    resp.version = session.getProto().VERSION;
+    resp.sessionId = session.getId();
     resp.random = serverRandom;
-    resp.salt = session.salt;
+    resp.salt = session.getSalt();
     return resp;
   }
 

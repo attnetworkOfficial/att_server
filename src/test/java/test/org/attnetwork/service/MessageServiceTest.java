@@ -5,20 +5,22 @@ import java.io.ByteArrayOutputStream;
 import org.attnetwork.crypto.ECCrypto;
 import org.attnetwork.crypto.asymmetric.AsmKeyPair;
 import org.attnetwork.crypto.asymmetric.AsmPublicKey;
-import org.attnetwork.proto.attn.AttnProto;
+import org.attnetwork.proto.attn.AtTnProto;
 import org.attnetwork.proto.msg.SessionStartMsg;
 import org.attnetwork.proto.msg.SessionStartMsgResp;
+import org.attnetwork.proto.msg.wrapper.TypedMsg;
 import org.attnetwork.proto.msg.wrapper.WrapType;
 import org.attnetwork.server.Application;
 import org.attnetwork.server.component.MessageOnion;
 import org.attnetwork.server.component.MessageService;
+import org.attnetwork.server.component.MessageType;
 import org.attnetwork.server.component.l2.EncryptServiceL2;
-import org.attnetwork.utils.HashUtil;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.util.Assert;
 
 @SpringBootTest(classes = Application.class)
 class MessageServiceTest {
@@ -40,18 +42,17 @@ class MessageServiceTest {
   }
 
   @Test
-  void testSessionStart() {
+  void testSession() {
     // simulate the client, trying to start session
     SessionStartMsg msg = new SessionStartMsg();
-    msg.attnVersion = AttnProto.DEBUG.VERSION;
+    msg.attnVersion = AtTnProto.DEBUG.VERSION;
     msg.random = new byte[128];
     encryptService.setup(userKeyPair);
 
     MessageOnion onion = MessageOnion
-        .sow("start_session", msg)
+        .sow(MessageType.START_SESSION, msg)
         .setSigner(serverKeyPair.publicKeyChain)
         .setWrapTypes(WrapType.L_ENCRYPT_SIGN);
-
     messageService.wrap(onion);
 
     // server receive the message
@@ -63,12 +64,43 @@ class MessageServiceTest {
     // client get the response
     encryptService.setup(userKeyPair);
     is = new ByteArrayInputStream(os.toByteArray());
-    MessageOnion process = MessageOnion.irrigation(is);
-    messageService.unwrap(process);
-    SessionStartMsgResp sessionStartMsgResp = process.readTypedMsg(SessionStartMsgResp.class);
-    System.out.println(sessionStartMsgResp.sessionId);
-    //
-    byte[] sharedSecret = HashUtil.sha512(msg.random, sessionStartMsgResp.random);
-    System.out.println(ByteUtils.toHexString(sharedSecret));
+    onion = MessageOnion.sow(is);
+    messageService.unwrap(onion);
+    SessionStartMsgResp sessionStartMsgResp = onion.readTypedMsg(SessionStartMsgResp.class);
+
+    // client send ATTN protocol encrypted msg
+    onion = MessageOnion
+        .sow(MessageType.__DEBUG__, null)
+        .setWrapTypes(WrapType.L_ATTN_PROTO)
+        .setSessionId(sessionStartMsgResp.sessionId);
+    messageService.wrap(onion);
+
+    // server receive ping message
+    is = new ByteArrayInputStream(onion.getWrappedMsg().getRaw());
+    os = new ByteArrayOutputStream();
+    messageService.process(is, os);
+
+    // receive encrypted msg
+    is = new ByteArrayInputStream(os.toByteArray());
+    onion = MessageOnion.sow(is);
+    messageService.unwrap(onion);
+
+    TypedMsg typedMsg = onion.getTypedMsg();
+    Assert.isTrue(MessageType.__DEBUG__.equals(typedMsg.type), "debug error");
+
+    // client send ATTN protocol encrypted msg
+    onion = MessageOnion
+        .sow(MessageType.PING, null)
+        .setWrapTypes(WrapType.L_ATTN_PROTO)
+        .setSessionId(sessionStartMsgResp.sessionId);
+    messageService.wrap(onion);
+
+    // server receive ping message
+    is = new ByteArrayInputStream(onion.getWrappedMsg().getRaw());
+    os = new ByteArrayOutputStream();
+    messageService.process(is, os);
+
+    // receive ping msg
+    Assert.isTrue(ByteUtils.equals(os.toByteArray(), new byte[]{0}), "debug error");
   }
 }

@@ -19,7 +19,7 @@ public class MessageOnion {
   private AsmPublicKeyChain signer;
   private Integer sessionId;
 
-  public static MessageOnion irrigation(InputStream is) {
+  public static MessageOnion sow(InputStream is) {
     MessageOnion onion = new MessageOnion();
     onion.wrappedMsg = AbstractSeqLanObject.read(is, WrappedMsg.class);
     return onion;
@@ -120,5 +120,9 @@ public class MessageOnion {
   public MessageOnion setSessionId(Integer sessionId) {
     this.sessionId = sessionId;
     return this;
+  }
+
+  public TypedMsg getTypedMsg() {
+    return typedMsg;
   }
 }

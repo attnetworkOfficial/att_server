@@ -13,6 +13,7 @@ import org.attnetwork.proto.msg.wrapper.SignedMsg;
 import org.attnetwork.proto.msg.wrapper.WrapType;
 import org.attnetwork.server.component.MessageOnion;
 import org.attnetwork.server.component.MessageService;
+import org.attnetwork.server.component.MessageType;
 import org.attnetwork.server.component.l2.EncryptServiceL2;
 import org.attnetwork.server.component.l2.SessionServiceL2;
 import org.slf4j.Logger;
@@ -36,13 +37,19 @@ public class MessageServiceImpl implements MessageService {
   @Override
   public void process(InputStream is, OutputStream os) {
     try {
-      MessageOnion onion = MessageOnion.irrigation(is);
+      MessageOnion onion = MessageOnion.sow(is);
       unwrap(onion);
       String msgType = onion.getMsgType();
       switch (msgType) {
-        case "start_session":
+        case MessageType.__DEBUG__:
+          __debug__(onion);
+          break;
+        case MessageType.START_SESSION:
           startSession(onion);
           break;
+        case MessageType.PING:
+          os.write(0);
+          return;
         case "null":
         default:
           throw new AException("unsupported message type: " + msgType);
@@ -57,8 +64,14 @@ public class MessageServiceImpl implements MessageService {
 
   private void startSession(MessageOnion onion) {
     onion.checkWrapTypes(WrapType.L_SIGN_ENCRYPT);
-    sessionService.startSession(onion);
+    onion.revive(sessionService.startSession(onion));
     onion.setWrapTypes(WrapType.L_ENCRYPT_SIGN);
+  }
+
+  private void __debug__(MessageOnion onion) {
+    onion.checkWrapTypes(WrapType.L_ATTN_PROTO);
+    onion.revive(MessageType.__DEBUG__, null);
+    onion.setWrapTypes(WrapType.L_ATTN_PROTO);
   }
 
   private void exceptionHandle(Exception e, OutputStream os) {
@@ -77,6 +90,7 @@ public class MessageServiceImpl implements MessageService {
     for (WrapType wrapType : onion.getWrapTypes()) {
       switch (wrapType) {
         case ATTN_PROTO:
+          wrapAtTnProto(onion);
           break;
         case SIGN:
           sign(onion);
@@ -108,21 +122,18 @@ public class MessageServiceImpl implements MessageService {
   }
 
   private void wrapAtTnProto(MessageOnion onion) {
-    AtTnOriginMsg atTnMsg = onion.unwrapMsg(AtTnOriginMsg.class);
-    // TODO decode ATTN_Proto data
-    byte[] decrypted = atTnMsg.getRaw();
+    byte[] data = onion.getProcessingMsg().getRaw();
+    AtTnEncryptedMsg encryptedMsg = sessionService.atTnEncrypt(data, onion.getSessionId());
 
-//    process.setSessionId(atTnMsg.sessionId);
-    onion.loadWrappedData(decrypted);
+    onion.wrap(WrapType.ATTN_PROTO, encryptedMsg);
   }
 
   private void unwrapAtTnProto(MessageOnion onion) {
-    AtTnEncryptedMsg atTnMsg = onion.unwrapMsg(AtTnEncryptedMsg.class);
-    // TODO decode ATTN_Proto data
-    byte[] decrypted = atTnMsg.data;
+    AtTnEncryptedMsg atTnEncryptedMsg = onion.unwrapMsg(AtTnEncryptedMsg.class);
+    AtTnOriginMsg originMsg = sessionService.atTnDecrypt(atTnEncryptedMsg);
 
-//    onion.setSessionId(atTnMsg.sessionId);
-    onion.loadWrappedData(decrypted);
+    onion.setSessionId(atTnEncryptedMsg.sessionId);
+    onion.loadWrappedData(originMsg.data);
   }
 
   // ----------------------------------------------------------------------------------------

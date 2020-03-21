@@ -38,7 +38,7 @@ import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 
-public class ECCrypto implements EncryptAsymmetric, Encrypt {
+public class ECCrypto implements EncryptAsymmetric {
   private final String algorithm;
   private final String paramName;
   private final String signAlgorithm;
@@ -88,22 +88,17 @@ public class ECCrypto implements EncryptAsymmetric, Encrypt {
 //    this.HALF_CURVE_ORDER = p.getN().shiftRight(1);
   }
 
-  @Override
-  public EncryptedData encrypt(Key key, byte[]... data) {
+  public EncryptedData encrypt(Key key, byte[] data) {
     try {
       synchronized (cipher) {
         cipher.init(Cipher.ENCRYPT_MODE, key);
-        for (byte[] d : data) {
-          cipher.update(d);
-        }
-        return EncryptedData.build(encryptAlgorithm, cipher.doFinal());
+        return EncryptedData.build(encryptAlgorithm, cipher.doFinal(data));
       }
     } catch (Exception e) {
       throw AException.wrap(e);
     }
   }
 
-  @Override
   public byte[] decrypt(Key key, byte[] data) {
     try {
       synchronized (cipher) {

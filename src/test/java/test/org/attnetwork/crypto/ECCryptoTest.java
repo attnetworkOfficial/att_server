@@ -51,7 +51,7 @@ class ECCryptoTest {
     BCECPublicKey publicKey = pair.getPublicKey();
 
     for (int i = 0; i < round; i++) {
-      byte[] data = HashUtil.sha256(("asdfafds").getBytes());
+      byte[] data = HashUtil.SHA3_256.hash(("asdfafds").getBytes());
       String info = "prv: " + privateKey.getD().toString(16) +
                     "\ndata: " + ByteUtils.toHexString(data);
 
@@ -86,7 +86,7 @@ class ECCryptoTest {
       ECKeyPair pair = ecc.generateKeyPair();
       BCECPrivateKey privateKey = pair.getPrivateKey();
       BCECPublicKey publicKey = pair.getPublicKey();
-      byte[] data = HashUtil.sha256(("asdfafds" + i).getBytes());
+      byte[] data = HashUtil.SHA3_256.hash(("asdfafds" + i).getBytes());
       String info = "prv: " + privateKey.getD().toString(16) +
                     "\ndata: " + ByteUtils.toHexString(data);
       byte[] sign = ecc.sign(privateKey, data).data;
