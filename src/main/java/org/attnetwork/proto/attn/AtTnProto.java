@@ -14,14 +14,14 @@ public class AtTnProto {
       8,
       1000,
       64,
-      defaultAesConverter());
+      DefaultAtTnKeyConverter::new);
 
   public static final AtTnProto V1_0 = new AtTnProto(
       "1.0",
       8,
       30 * (60 * 1000),
       64,
-      defaultAesConverter());
+      DefaultAtTnKeyConverter::new);
 
   public static AtTnProto getByVersion(String version) {
     return MAP.get(version);
@@ -55,50 +55,52 @@ public class AtTnProto {
   public final long SERVER_SALT_UPDATE_TIME; // ms
   public final AesKeyConverter AES_KEY_CONVERTER;
 
+  public interface AesKeyConverter {
+    AtTnKeyConverter init(byte[] rand1, byte[] rand2);
+  }
+}
 
-  private static AesKeyConverter defaultAesConverter() {
-    return (rand1, rand2) -> {
-      AtTnKeyConverter c = new AtTnKeyConverter() {
-        @Override
-        public String aesMode() {
-          return "AES/GCM/NoPadding";
-        }
+class DefaultAtTnKeyConverter implements AtTnKeyConverter {
+  private final byte[] msgKeyPart1;
+  private final byte[] msgKeyPart2;
+  private final byte[] aesKeyPart1;
+  private final byte[] aesKeyPart2;
 
-        @Override
-        public int aesBlockSize() {
-          return 256;
-        }
-
-        @Override
-        public byte[] msgKeyFromRaw(byte[] raw) {
-          return subArray(SHA3_256.hash(msgKeyPart1, raw, msgKeyPart2), 4, 16);
-        }
-
-        @Override
-        public AtTnKeys keysFromRaw(byte[] raw) {
-          return keysFromMsgKey(msgKeyFromRaw(raw));
-        }
-
-        @Override
-        public AtTnKeys keysFromMsgKey(byte[] msgKey) {
-          AtTnKeys k = new AtTnKeys();
-          k.msgKey = msgKey;
-          k.aesKey = new SecretKeySpec(SHA3_256.hash(msgKey, aesKeyPart1), "AES");
-          k.aesIv = new GCMParameterSpec(128, SHA3_256.hash(msgKey, aesKeyPart2));
-          return k;
-        }
-      };
-      byte[] sharedSecret1 = SHA3_512.hash(rand1, rand2);
-      byte[] sharedSecret2 = SHA3_512.hash(rand2, rand1);
-      c.msgKeyPart1 = subArray(sharedSecret1, 0, 32);
-      c.aesKeyPart1 = subArray(sharedSecret1, 32, 32);
-      c.msgKeyPart2 = subArray(sharedSecret2, 0, 32);
-      c.aesKeyPart2 = subArray(sharedSecret2, 32, 32);
-      return c;
-    };
+  DefaultAtTnKeyConverter(byte[] rand1, byte[] rand2) {
+    byte[] sharedSecret1 = SHA3_512.hash(rand1, rand2);
+    byte[] sharedSecret2 = SHA3_512.hash(rand2, rand1);
+    msgKeyPart1 = subArray(sharedSecret1, 0, 32);
+    aesKeyPart1 = subArray(sharedSecret1, 32, 32);
+    msgKeyPart2 = subArray(sharedSecret2, 0, 32);
+    aesKeyPart2 = subArray(sharedSecret2, 32, 32);
   }
 
-  public interface AesKeyConverter {
-    AtTnKeyConverter convert(byte[] rand1, byte[] rand2);
+  @Override
+  public String aesMode() {
+    return "AES/GCM/NoPadding";
+  }
+
+  @Override
+  public int aesBlockSize() {
+    return 256;
+  }
+
+  @Override
+  public byte[] msgKeyFromRaw(byte[] raw) {
+    return subArray(SHA3_256.hash(msgKeyPart1, raw, msgKeyPart2), 4, 16);
+  }
+
+  @Override
+  public AtTnKeys keysFromRaw(byte[] raw) {
+    return keysFromMsgKey(msgKeyFromRaw(raw));
+  }
+
+  @Override
+  public AtTnKeys keysFromMsgKey(byte[] msgKey) {
+    AtTnKeys k = new AtTnKeys();
+    k.msgKey = msgKey;
+    k.aesKey = new SecretKeySpec(SHA3_256.hash(msgKey, aesKeyPart1), "AES");
+    k.aesIv = new GCMParameterSpec(128, SHA3_256.hash(msgKey, aesKeyPart2));
+    return k;
   }
 }

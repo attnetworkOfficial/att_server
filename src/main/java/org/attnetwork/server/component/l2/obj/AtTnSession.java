@@ -37,7 +37,7 @@ public class AtTnSession {
     }
     this.id = id;
     this.proto = proto;
-    this.atTnKeyConverter = proto.AES_KEY_CONVERTER.convert(clientRandom, serverRandom);
+    this.atTnKeyConverter = proto.AES_KEY_CONVERTER.init(clientRandom, serverRandom);
     this.userPublicKeyChain = userPublicKeyChain;
     this.createTimestamp = System.currentTimeMillis();
     this.saltTimestamp = 0L;

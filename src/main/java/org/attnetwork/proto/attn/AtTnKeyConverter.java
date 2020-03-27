@@ -1,18 +1,13 @@
 package org.attnetwork.proto.attn;
 
-public abstract class AtTnKeyConverter {
-  byte[] msgKeyPart1;
-  byte[] msgKeyPart2;
-  byte[] aesKeyPart1;
-  byte[] aesKeyPart2;
+public interface AtTnKeyConverter {
+  String aesMode();
 
-  public abstract String aesMode();
+  int aesBlockSize();
 
-  public abstract int aesBlockSize();
+  byte[] msgKeyFromRaw(byte[] raw);
 
-  public abstract byte[] msgKeyFromRaw(byte[] raw);
+  AtTnKeys keysFromRaw(byte[] messageData);
 
-  public abstract AtTnKeys keysFromRaw(byte[] messageData);
-
-  public abstract AtTnKeys keysFromMsgKey(byte[] msgKey);
+  AtTnKeys keysFromMsgKey(byte[] msgKey);
 }
