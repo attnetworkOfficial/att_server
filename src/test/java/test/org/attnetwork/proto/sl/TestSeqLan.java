@@ -4,10 +4,12 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import org.attnetwork.proto.sl.AbstractSeqLanObject;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.Assert;
+import test.org.attnewtork.proto.msg.ComplicatedMsg;
 import test.org.attnewtork.proto.msg.ExampleUserContactMsg;
 import test.org.attnewtork.proto.msg.ExampleUserMsg;
 
@@ -44,6 +46,34 @@ class TestSeqLan {
 
     Assert.isTrue(ByteUtils.equals(rawB, ByteUtils.fromHexString(rawHex)),
                   "rawB should equals rawHex\nB: " + ByteUtils.toHexString(rawB) + "\nR: " + rawHex);
+  }
+
+
+  @Test
+  void testComplicatedMsg() throws IOException {
+    ComplicatedMsg msgA = new ComplicatedMsg();
+    msgA.lists = new ArrayList<>();
+    msgA.lists.add(new ArrayList<>());
+    msgA.lists.get(0).add(new ArrayList<>());
+    msgA.lists.get(0).get(0).add(1);
+    msgA.lists.get(0).get(0).add(21123123);
+    msgA.lists.get(0).add(new ArrayList<>());
+    msgA.lists.get(0).get(1).add(2);
+    msgA.lists.get(0).get(1).add(333);
+    msgA.lists.add(0, new ArrayList<>());
+    msgA.lists.add(0, new ArrayList<>());
+
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    msgA.write(os);
+    byte[] rawA = os.toByteArray();
+
+    ComplicatedMsg msgB = AbstractSeqLanObject.read(new ByteArrayInputStream(rawA), ComplicatedMsg.class);
+    os = new ByteArrayOutputStream();
+    msgB.write(os);
+    byte[] rawB = os.toByteArray();
+
+    Assert.isTrue(ByteUtils.equals(rawA, rawB),
+                  "rawA should equals rawB\nA: " + ByteUtils.toHexString(rawA) + "\nB: " + ByteUtils.toHexString(rawB));
   }
 }
 

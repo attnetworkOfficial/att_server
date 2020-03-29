@@ -1,8 +1,8 @@
 package org.attnetwork.utils;
 
 import java.lang.reflect.Array;
-import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.List;
 
 
@@ -12,11 +12,15 @@ public class ReflectUtil {
     return list.toArray((T[]) Array.newInstance(type, list.size()));
   }
 
-  public static Class<?> getFieldGenericType(Field field, int i) {
-    if (field == null) {
+
+  public static Type[] getGenericTypes(Type type) {
+    if (type == null) {
       throw new IllegalArgumentException();
     }
-    ParameterizedType genericType = (ParameterizedType) field.getGenericType();
-    return (Class<?>) genericType.getActualTypeArguments()[i];
+    if (type instanceof ParameterizedType) {
+      return ((ParameterizedType) type).getActualTypeArguments();
+    } else {
+      return null;
+    }
   }
 }

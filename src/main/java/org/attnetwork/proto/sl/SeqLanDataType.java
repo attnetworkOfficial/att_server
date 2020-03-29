@@ -1,5 +1,7 @@
 package org.attnetwork.proto.sl;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.List;
 
 public enum SeqLanDataType {
@@ -43,34 +45,45 @@ public enum SeqLanDataType {
     return getClassType(value.getClass());
   }
 
-  public static SeqLanDataType getClassType(Class<?> type) {
-    if (AbstractSeqLanObject.class.isAssignableFrom(type)) {
-      return OBJECT;
-    } else if (List.class.isAssignableFrom(type)) {
-      return LIST;
-    } else if (type.isArray()) {
-      if (byte[].class.isAssignableFrom(type)) {
-        return RAW;
+  public static SeqLanDataType getClassType(Type type) {
+    if (type instanceof Class) {
+      Class clazz = (Class) type;
+      if (AbstractSeqLanObject.class.isAssignableFrom(clazz)) {
+        return OBJECT;
+      } else if (List.class.isAssignableFrom(clazz)) {
+        return LIST;
+      } else if (clazz.isArray()) {
+        if (byte[].class.isAssignableFrom(clazz)) {
+          return RAW;
+        } else {
+          return ARRAY;
+        }
       } else {
-        return ARRAY;
+        switch (clazz.getSimpleName()) {
+          case "Integer":
+            return INTEGER;
+          case "Long":
+            return LONG;
+          case "BigInteger":
+            return BIG_INTEGER;
+          case "BigDecimal":
+            return BIG_DECIMAL;
+          case "String":
+            return STRING;
+          case "BitmapFlags":
+            return BITMAP_FLAGS;
+          default:
+            return UNKNOWN;
+        }
       }
     } else {
-      switch (type.getSimpleName()) {
-        case "Integer":
-          return INTEGER;
-        case "Long":
-          return LONG;
-        case "BigInteger":
-          return BIG_INTEGER;
-        case "BigDecimal":
-          return BIG_DECIMAL;
-        case "String":
-          return STRING;
-        case "BitmapFlags":
-          return BITMAP_FLAGS;
-        default:
-          return UNKNOWN;
+      if (type instanceof ParameterizedType) {
+        ParameterizedType parameterizedType = (ParameterizedType) type;
+        if (parameterizedType.getRawType() instanceof Class) {
+          return getClassType(parameterizedType.getRawType());
+        }
       }
+      return UNKNOWN;
     }
   }
 }
