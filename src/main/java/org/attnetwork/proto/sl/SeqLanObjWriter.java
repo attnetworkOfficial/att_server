@@ -6,6 +6,7 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 
 class SeqLanObjWriter {
 
@@ -16,7 +17,9 @@ class SeqLanObjWriter {
     switch (SeqLanDataType.getFieldType(value)) {
       case OBJECT:
       case ARRAY:
+      case GENERIC_ARRAY:
       case LIST:
+      case MAP:
         return multiToByteArray(value);
       case RAW:
         return (byte[]) value;
@@ -31,7 +34,7 @@ class SeqLanObjWriter {
       case STRING:
         return ((String) value).getBytes();
       default:
-        throw new IllegalArgumentException("unsupported class: " + value.getClass().getSimpleName());
+        throw new IllegalArgumentException("write unsupported class: " + value.getClass().getSimpleName());
     }
   }
 
@@ -54,8 +57,15 @@ class SeqLanObjWriter {
         }
         break;
       case ARRAY:
+      case GENERIC_ARRAY:
         for (Object element : (Object[]) value) {
           SeqLan.writeLengthData(cache, toByteArray(element));
+        }
+        break;
+      case MAP:
+        for (Object o : ((Map) value).entrySet()) {
+          SeqLan.writeLengthData(cache, toByteArray(((Map.Entry) o).getKey()));
+          SeqLan.writeLengthData(cache, toByteArray(((Map.Entry) o).getValue()));
         }
         break;
       default:

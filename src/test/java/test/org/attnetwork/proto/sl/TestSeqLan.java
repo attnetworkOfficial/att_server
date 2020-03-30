@@ -5,6 +5,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import org.attnetwork.proto.sl.AbstractSeqLanObject;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 import org.junit.jupiter.api.Test;
@@ -51,20 +56,38 @@ class TestSeqLan {
 
   @Test
   void testComplicatedMsg() throws IOException {
-    ComplicatedMsg msgA = new ComplicatedMsg();
-    msgA.lists = new ArrayList<>();
-    msgA.lists.add(new ArrayList<>());
-    msgA.lists.get(0).add(new ArrayList<>());
-    msgA.lists.get(0).get(0).add(1);
-    msgA.lists.get(0).get(0).add(21123123);
-    msgA.lists.get(0).add(new ArrayList<>());
-    msgA.lists.get(0).get(1).add(2);
-    msgA.lists.get(0).get(1).add(333);
-    msgA.lists.add(0, new ArrayList<>());
-    msgA.lists.add(0, new ArrayList<>());
+    ComplicatedMsg a = new ComplicatedMsg();
+    a.lists = new ArrayList<>();
+    a.lists.add(new LinkedList<>());
+    a.lists.get(0).add(new ArrayList<>());
+    a.lists.get(0).get(0).add(1);
+    a.lists.get(0).get(0).add(21123123);
+    a.lists.get(0).add(new ArrayList<>());
+    a.lists.get(0).get(1).add(2);
+    a.lists.get(0).get(1).add(333);
+    a.lists.add(0, new LinkedList<>());
+    a.lists.add(0, new LinkedList<>());
+
+    a.map = new HashMap<>();
+    a.map.put("a", new ArrayList<>());
+    List<TreeMap<String, Integer>> aV = a.map.get("a");
+    TreeMap<String, Integer> ttt = new TreeMap<>();
+    ttt.put("asd", 123);
+    ttt.put("fgh", 456);
+    ttt.put("jkl", 789);
+    aV.add(ttt);
+    a.map.put("c", new LinkedList<>());
+
+    @SuppressWarnings("unchecked")
+    List<Map<Integer, Map<String, String>>>[] array = new List[1];
+    a.array = array;
+    array[0] = new ArrayList<>();
+    array[0].add(new HashMap<>());
+    array[0].get(0).put(1, new HashMap<>());
+    array[0].get(0).get(1).put("hello", "world");
 
     ByteArrayOutputStream os = new ByteArrayOutputStream();
-    msgA.write(os);
+    a.write(os);
     byte[] rawA = os.toByteArray();
 
     ComplicatedMsg msgB = AbstractSeqLanObject.read(new ByteArrayInputStream(rawA), ComplicatedMsg.class);

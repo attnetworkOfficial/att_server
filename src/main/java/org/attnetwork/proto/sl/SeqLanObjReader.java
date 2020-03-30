@@ -1,28 +1,30 @@
 package org.attnetwork.proto.sl;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.attnetwork.exception.AException;
-import org.attnetwork.proto.sl.AbstractSeqLanObject.ProcessFieldData;
 import org.attnetwork.utils.BitmapFlags;
 import org.attnetwork.utils.ReflectUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings({"unchecked", "ConstantConditions"})
 class SeqLanObjReader {
   private static final Logger log = LoggerFactory.getLogger(SeqLanObjReader.class);
 
   static <T extends AbstractSeqLanObject> T read(InputStream source, Class<T> msgType) {
     try {
-      return wrap(source).read(msgType);
+      return (T) wrap(source).read(msgType);
     } catch (Exception e) {
       throw AException.wrap(e);
     }
@@ -42,17 +44,17 @@ class SeqLanObjReader {
 
   private SeqLanObjReader(InputStream source) {
     this.source = source;
-    this.cache = new byte[32];
+    this.cache = new byte[16];
   }
 
 
-  private <T> T read(Type type) throws Exception {
+  private Object read(Type type) throws Exception {
     readNextDataLength();
     if (nextDataLength == 0) {
       return null;
     } else {
       int next = nextDataLength + index;
-      T obj = readCurrentObject(type);
+      Object obj = readCurrentObject(type);
       if (index < next) {
         log.warn("unread data remain for type:{}, index:{}, next:{}", type.getTypeName(), index, next);
         index = next;
@@ -63,39 +65,47 @@ class SeqLanObjReader {
     }
   }
 
-  @SuppressWarnings({"unchecked", "ConstantConditions"})
-  private <T> T readCurrentObject(Type type) throws Exception {
-    SeqLanDataType fieldType = SeqLanDataType.getClassType(type);
+  private Object readCurrentObject(Type type) throws Exception {
+    SeqLanDataType fieldType = SeqLanDataType.getTypeType(type);
     switch (fieldType) {
       case OBJECT:
-        return readMessage((Class<T>) type);
+        return readMessage((Class) type);
       case ARRAY: // unknown array nextDataLength, read as list first
         Class componentType = ((Class) type).getComponentType();
-        return (T) ReflectUtil.listToArray(readList(componentType), componentType);
+        return ReflectUtil.listToArray(readList(null, componentType), componentType);
+      case GENERIC_ARRAY:
+        Type genericComponentType = ((GenericArrayType) type).getGenericComponentType();
+        return ReflectUtil.listToArray(readList(null, genericComponentType), getParameterizedTypeClass(genericComponentType));
       case LIST:
-        return (T) readList(ReflectUtil.getGenericTypes(type)[0]);
+        return readList(type);
+      case MAP:
+        return readMap(type);
       case BIG_DECIMAL:
-        return (T) readBigDecimal();
+        return readBigDecimal();
       case RAW:
-        return (T) readRaw();
+        return readRaw();
       case BITMAP_FLAGS:
-        return (T) BitmapFlags.load((Class<Enum>) ReflectUtil.getGenericTypes(type)[0], readRaw());
+        return BitmapFlags.load((Class<Enum>) ReflectUtil.getGenericTypes(type)[0], readRaw());
       case INTEGER:
-        return (T) (Integer) readBigInteger().intValueExact();
+        return readBigInteger().intValueExact();
       case LONG:
-        return (T) (Long) readBigInteger().longValueExact();
+        return readBigInteger().longValueExact();
       case BIG_INTEGER:
-        return (T) readBigInteger();
+        return readBigInteger();
       case STRING:
-        return (T) readString();
+        return readString();
       default:
-        throw new IllegalArgumentException("unsupported type: " + type.getTypeName());
+        throw new IllegalArgumentException("read unsupported type: " + type.getTypeName());
     }
   }
 
-  private <T> T readMessage(Class<T> type) throws Exception {
+  private Class getParameterizedTypeClass(Type type) {
+    return (Class) ((ParameterizedType) type).getRawType();
+  }
+
+  private Object readMessage(Class type) throws Exception {
     Field[] fields = type.getFields();
-    T msg = type.newInstance();
+    Object msg = type.newInstance();
     for (Field field : fields) {
       Object value = read(field.getGenericType());
       if (value != null) {
@@ -105,30 +115,36 @@ class SeqLanObjReader {
     return msg;
   }
 
-  private Object readMessageField(AbstractSeqLanObject msg, Field field) throws Exception {
-    for (Annotation annotation : field.getDeclaredAnnotations()) {
-      if (annotation.annotationType().isAssignableFrom(ProcessFieldData.class)) {
-        return processFieldData(msg, field);
-      }
+  private List readList(Type type) throws Exception {
+    return readList(type, ReflectUtil.getGenericTypes(type)[0]);
+  }
+
+  private List readList(Type type, Type elementType) throws Exception {
+    List list;
+    if (type == null) {
+      list = new ArrayList();
+    } else {
+      Class listType = getParameterizedTypeClass(type);
+      list = listType.getName().equals("java.util.List")
+          ? new ArrayList() : (List) listType.newInstance();
     }
-    return read(field.getGenericType());
-  }
-
-  private Object processFieldData(AbstractSeqLanObject msg, Field field) throws Exception {
-    readNextDataLength();
-    readDataIntoCache();
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    SeqLan.writeLengthData(os, msg.processFieldData(cache, nextDataLength));
-    return wrap(new ByteArrayInputStream(os.toByteArray())).read(field.getGenericType());
-  }
-
-  private <T> ArrayList<T> readList(Type elementType) throws Exception {
-    ArrayList<T> list = new ArrayList<>();
     int end = index + nextDataLength;
     while (end > index) {
       list.add(read(elementType));
     }
     return list;
+  }
+
+  private Object readMap(Type type) throws Exception {
+    Class mapType = getParameterizedTypeClass(type);
+    Map map = mapType.getName().equals("java.util.Map")
+        ? new HashMap() : (Map) mapType.newInstance();
+    Type[] genericTypes = ReflectUtil.getGenericTypes(type);
+    int end = index + nextDataLength;
+    while (end > index) {
+      map.put(read(genericTypes[0]), read(genericTypes[1]));
+    }
+    return map;
   }
 
   private byte[] readRaw() throws IOException {

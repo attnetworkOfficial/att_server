@@ -9,9 +9,10 @@ public abstract class SeqLan {
   static final String DECIMAL = "decimal";
   static final String STRING = "string";
   static final String ARRAY = "array";
+  static final String DICT = "dict";
   static final String OBJECT = "object";
 
-  static void writeVarInt(OutputStream os, int varInt) throws IOException {
+  private static void writeVarInt(OutputStream os, int varInt) throws IOException {
     if (varInt < 0) {
       throw new IllegalArgumentException();
     }

@@ -8,10 +8,9 @@ import java.util.List;
 
 @SuppressWarnings("unchecked")
 public class ReflectUtil {
-  public static <T> T[] listToArray(List<T> list, Class<?> type) {
+  public static <T> T[] listToArray(List<T> list, Class type) {
     return list.toArray((T[]) Array.newInstance(type, list.size()));
   }
-
 
   public static Type[] getGenericTypes(Type type) {
     if (type == null) {

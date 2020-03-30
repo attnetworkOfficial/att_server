@@ -5,19 +5,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 import org.attnetwork.exception.AException;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 import org.bouncycastle.util.encoders.Base64;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public abstract class AbstractSeqLanObject {
-  private static final Logger log = LoggerFactory.getLogger(AbstractSeqLanObject.class);
-
   private int dataLengthLen;
   byte[] raw;
 
@@ -47,7 +39,7 @@ public abstract class AbstractSeqLanObject {
     os.write(getRaw());
   }
 
-  public void writeWithoutLen(OutputStream os) throws IOException {
+  void writeWithoutLen(OutputStream os) throws IOException {
     os.write(getRaw(), dataLengthLen, raw.length - dataLengthLen);
   }
 
@@ -85,17 +77,5 @@ public abstract class AbstractSeqLanObject {
 
   public String toHexString() {
     return ByteUtils.toHexString(getRaw());
-  }
-
-  @Target(ElementType.FIELD)
-  @Retention(RetentionPolicy.RUNTIME)
-  protected @interface ProcessFieldData {
-  }
-
-  protected byte[] processFieldData(byte[] cache, int dataLength) {
-    log.info("{}, process field data did nothing", getClass().getName());
-    byte[] processedData = new byte[dataLength];
-    System.arraycopy(cache, 0, processedData, 0, dataLength);
-    return processedData;
   }
 }
