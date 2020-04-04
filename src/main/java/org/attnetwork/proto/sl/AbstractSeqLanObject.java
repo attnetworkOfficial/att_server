@@ -44,23 +44,10 @@ public abstract class AbstractSeqLanObject {
   }
 
   public byte[] getRaw() {
-    try {
-      if (raw == null) {
-        byte[] data = SeqLanObjWriter.toByteArray(this);
-        if (data.length > 0) {
-          dataLengthLen = SeqLan.varIntLength(data.length);
-          ByteArrayOutputStream os = new ByteArrayOutputStream();
-          SeqLan.writeLengthData(os, data);
-          raw = os.toByteArray();
-        } else {
-          dataLengthLen = 0;
-          raw = data;
-        }
-      }
-      return raw;
-    } catch (Exception e) {
-      throw AException.wrap(e);
+    if (raw == null) {
+      createRaw();
     }
+    return raw;
   }
 
   public void clearRaw() {
@@ -77,5 +64,23 @@ public abstract class AbstractSeqLanObject {
 
   public String toHexString() {
     return ByteUtils.toHexString(getRaw());
+  }
+
+
+  private void createRaw() {
+    try {
+      byte[] data = SeqLanObjWriter.toByteArray(this);
+      if (data.length > 0) {
+        dataLengthLen = SeqLan.varIntLength(data.length);
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        SeqLan.writeLengthData(os, data);
+        raw = os.toByteArray();
+      } else {
+        dataLengthLen = 0;
+        raw = data;
+      }
+    } catch (Exception e) {
+      throw AException.wrap(e);
+    }
   }
 }
