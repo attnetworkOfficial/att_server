@@ -21,5 +21,6 @@ public class HttpServer {
   @RequestMapping("**")
   public void handle(HttpServletRequest request, HttpServletResponse response) throws IOException {
     messageService.process(request.getInputStream(), response.getOutputStream());
+    response.getOutputStream().flush();
   }
 }

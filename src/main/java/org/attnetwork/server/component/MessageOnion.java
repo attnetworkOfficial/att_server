@@ -11,6 +11,8 @@ import org.attnetwork.proto.msg.wrapper.TypedMsg;
 import org.attnetwork.proto.msg.wrapper.WrapType;
 import org.attnetwork.proto.msg.wrapper.WrappedMsg;
 import org.attnetwork.proto.sl.AbstractSeqLanObject;
+import org.attnetwork.proto.sl.SeqLanObjReaderSource;
+import org.attnetwork.proto.sl.SeqLanObjWriterTarget;
 
 public class MessageOnion {
   private TypedMsg typedMsg;
@@ -19,10 +21,14 @@ public class MessageOnion {
   private AsmPublicKeyChain signer;
   private Integer sessionId;
 
-  public static MessageOnion sow(InputStream is) {
+  public static MessageOnion sow(SeqLanObjReaderSource source) {
     MessageOnion onion = new MessageOnion();
-    onion.wrappedMsg = AbstractSeqLanObject.read(is, WrappedMsg.class);
+    onion.wrappedMsg = AbstractSeqLanObject.read(source, WrappedMsg.class);
     return onion;
+  }
+
+  public static MessageOnion sow(InputStream source) {
+    return sow(SeqLanObjReaderSource.wrap(source));
   }
 
   public static MessageOnion sow(String type, AbstractSeqLanObject msg) {
@@ -39,8 +45,9 @@ public class MessageOnion {
     return this;
   }
 
-  public void harvest(OutputStream os) throws IOException {
-    wrappedMsg.write(os);
+  public void harvest(SeqLanObjWriterTarget target) throws IOException {
+    wrappedMsg.write(target);
+    target.flush();
   }
 
   public AbstractSeqLanObject getProcessingMsg() {

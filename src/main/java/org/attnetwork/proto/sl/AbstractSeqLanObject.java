@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import org.attnetwork.exception.AException;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 import org.bouncycastle.util.encoders.Base64;
@@ -16,12 +17,20 @@ public abstract class AbstractSeqLanObject {
   /**
    * convert raw message to a Java Object instance.
    */
-  public static <T extends AbstractSeqLanObject> T read(InputStream source, Class<T> msgType) {
+  public static <T extends AbstractSeqLanObject> T read(SeqLanObjReaderSource source, Class<T> msgType) {
     return SeqLanObjReader.read(source, msgType);
+  }
+
+  public static <T extends AbstractSeqLanObject> T read(InputStream source, Class<T> msgType) {
+    return read(SeqLanObjReaderSource.wrap(source), msgType);
   }
 
   public static <T extends AbstractSeqLanObject> T read(byte[] source, Class<T> msgType) {
     return read(new ByteArrayInputStream(source), msgType);
+  }
+
+  public static <T extends AbstractSeqLanObject> T read(ByteBuffer source, Class<T> msgType) {
+    return read(SeqLanObjReaderSource.wrap(source), msgType);
   }
 
   public static <T extends AbstractSeqLanObject> T readBase64String(String source, Class<T> msgType) {
@@ -37,6 +46,10 @@ public abstract class AbstractSeqLanObject {
    */
   public void write(OutputStream os) throws IOException {
     os.write(getRaw());
+  }
+
+  public void write(SeqLanObjWriterTarget target) throws IOException {
+    target.write(getRaw());
   }
 
   void writeWithoutLen(OutputStream os) throws IOException {

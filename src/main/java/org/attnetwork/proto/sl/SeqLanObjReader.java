@@ -1,7 +1,6 @@
 package org.attnetwork.proto.sl;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
@@ -22,7 +21,7 @@ import org.slf4j.LoggerFactory;
 class SeqLanObjReader {
   private static final Logger log = LoggerFactory.getLogger(SeqLanObjReader.class);
 
-  static <T extends AbstractSeqLanObject> T read(InputStream source, Class<T> msgType) {
+  static <T extends AbstractSeqLanObject> T read(SeqLanObjReaderSource source, Class<T> msgType) {
     try {
       return (T) wrap(source).read(msgType);
     } catch (Exception e) {
@@ -31,18 +30,18 @@ class SeqLanObjReader {
   }
 
 
-  private final InputStream source;
+  private final SeqLanObjReaderSource source;
 
   private byte[] cache;
   private int index;
   private int nextDataLength;
 
 
-  private static SeqLanObjReader wrap(InputStream source) {
+  private static SeqLanObjReader wrap(SeqLanObjReaderSource source) {
     return new SeqLanObjReader(source);
   }
 
-  private SeqLanObjReader(InputStream source) {
+  private SeqLanObjReader(SeqLanObjReaderSource source) {
     this.source = source;
     this.cache = new byte[16];
   }
@@ -195,7 +194,7 @@ class SeqLanObjReader {
   private void readData(byte[] target) throws IOException {
     int read = source.read(target, 0, nextDataLength);
     if (read < 0) {
-      throw new IOException("unexpected stream end reached");
+      throw new IOException("unexpected source end reached");
     }
     index += nextDataLength;
   }

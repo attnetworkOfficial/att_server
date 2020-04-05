@@ -1,7 +1,6 @@
 package org.attnetwork.server.component.impl;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import org.attnetwork.crypto.EncryptedData;
 import org.attnetwork.crypto.asymmetric.AsmPublicKeyChain;
@@ -11,6 +10,8 @@ import org.attnetwork.proto.msg.wrapper.AtTnEncryptedMsg;
 import org.attnetwork.proto.msg.wrapper.AtTnOriginMsg;
 import org.attnetwork.proto.msg.wrapper.SignedMsg;
 import org.attnetwork.proto.msg.wrapper.WrapType;
+import org.attnetwork.proto.sl.SeqLanObjReaderSource;
+import org.attnetwork.proto.sl.SeqLanObjWriterTarget;
 import org.attnetwork.server.component.MessageOnion;
 import org.attnetwork.server.component.MessageService;
 import org.attnetwork.server.component.MessageType;
@@ -20,6 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.socket.BinaryMessage;
+import org.springframework.web.socket.WebSocketSession;
 
 @Service
 public class MessageServiceImpl implements MessageService {
@@ -35,9 +38,9 @@ public class MessageServiceImpl implements MessageService {
   }
 
   @Override
-  public void process(InputStream is, OutputStream os) {
+  public void process(SeqLanObjReaderSource source, SeqLanObjWriterTarget target) {
     try {
-      MessageOnion onion = MessageOnion.sow(is);
+      MessageOnion onion = MessageOnion.sow(source);
       unwrap(onion);
       String msgType = onion.getMsgType();
       switch (msgType) {
@@ -48,18 +51,22 @@ public class MessageServiceImpl implements MessageService {
           startSession(onion);
           break;
         case MessageType.PING:
-          os.write(0);
+          target.write(new byte[]{0});
           return;
         case "null":
         default:
           throw new AException("unsupported message type: " + msgType);
       }
       wrap(onion);
-      onion.harvest(os);
+      onion.harvest(target);
     } catch (Exception e) {
       log.error("", e);
-      exceptionHandle(e, os);
+      exceptionHandle(e, target);
     }
+  }
+
+  @Override
+  public void processWebSocket(WebSocketSession session, BinaryMessage message, OutputStream os) {
   }
 
   private void startSession(MessageOnion onion) {
@@ -74,12 +81,12 @@ public class MessageServiceImpl implements MessageService {
     onion.setWrapTypes(WrapType.L_ATTN_PROTO);
   }
 
-  private void exceptionHandle(Exception e, OutputStream os) {
+  private void exceptionHandle(Exception e, SeqLanObjWriterTarget target) {
     try {
       ErrorMsg errorMsg = new ErrorMsg();
       errorMsg.code = e instanceof AException ? ((AException) e).getCode() : "400";
       errorMsg.msg = e.getMessage();
-      MessageOnion.sow("resp.error", errorMsg).harvest(os);
+      MessageOnion.sow("resp.error", errorMsg).harvest(target);
     } catch (IOException ioE) {
       log.error("write outputStream error!", ioE.getMessage());
     }

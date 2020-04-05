@@ -50,6 +50,13 @@ public class SessionServiceL2Impl implements SessionServiceL2 {
     return getSession(encryptedMsg.sessionId).decrypt(encryptedMsg);
   }
 
+//  @Override
+  public void checkWebSocketSession() {
+
+  }
+
+
+
   private AtTnSession getSession(Integer id) {
     if (id == null) {
       throw new AException("session id is null");
