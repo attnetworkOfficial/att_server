@@ -5,10 +5,11 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.attnetwork.exception.AException;
 import org.springframework.util.StringUtils;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SeqLanJsonConverter {
   private static JsonFactory jsonFactory = new JsonFactory();

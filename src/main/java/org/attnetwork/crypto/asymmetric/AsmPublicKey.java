@@ -57,13 +57,13 @@ public final class AsmPublicKey extends AbstractSeqLanObject {
   @Override
   public String toString() {
     return "┌ public key info ──────────────" +
-           (algorithm      /**/ == null ? "" : "\n│ algorithm:      " + algorithm) +
-           (startTimestamp /**/ == null ? "" : "\n│ invalid before: " + DateUtil.toHumanString(startTimestamp)) +
-           (endTimestamp   /**/ == null ? "" : "\n│ invalid after:  " + DateUtil.toHumanString(endTimestamp)) +
-           (createTimestamp/**/ == null ? "" : "\n│ create time:    " + DateUtil.toHumanString(createTimestamp)) +
-           (proof          /**/ == null ? "" : "\n│ proof:          " + proof) +
-           (desc           /**/ == null ? "" : "\n│ description:    " + desc) +
-           (data           /**/ == null ? "" : "\n│ key:            " + ByteUtils.toHexString(data));
+        (algorithm      /**/ == null ? "" : "\n│ algorithm:      " + algorithm) +
+        (startTimestamp /**/ == null ? "" : "\n│ invalid before: " + DateUtil.toHumanString(startTimestamp)) +
+        (endTimestamp   /**/ == null ? "" : "\n│ invalid after:  " + DateUtil.toHumanString(endTimestamp)) +
+        (createTimestamp/**/ == null ? "" : "\n│ create time:    " + DateUtil.toHumanString(createTimestamp)) +
+        (proof          /**/ == null ? "" : "\n│ proof:          " + proof) +
+        (desc           /**/ == null ? "" : "\n│ description:    " + desc) +
+        (data           /**/ == null ? "" : "\n│ key:            " + ByteUtils.toHexString(data));
   }
 
 
@@ -86,6 +86,6 @@ public final class AsmPublicKey extends AbstractSeqLanObject {
 
   public boolean isValidTimestamp(long now) {
     return (startTimestamp == null || startTimestamp <= now) &&
-           (endTimestamp == null || now <= endTimestamp);
+        (endTimestamp == null || now <= endTimestamp);
   }
 }

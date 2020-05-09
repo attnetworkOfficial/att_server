@@ -1,12 +1,12 @@
 package org.attnetwork.proto.attn;
 
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.util.HashMap;
+
 import static org.attnetwork.utils.ByteUtil.subArray;
 import static org.attnetwork.utils.HashUtil.SHA3_256;
 import static org.attnetwork.utils.HashUtil.SHA3_512;
-
-import java.util.HashMap;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 
 public class AtTnProto {
   public static final AtTnProto DEBUG = new AtTnProto(

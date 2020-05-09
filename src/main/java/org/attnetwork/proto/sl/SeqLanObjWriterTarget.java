@@ -1,9 +1,10 @@
 package org.attnetwork.proto.sl;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.io.IOException;
+import java.io.OutputStream;
 
 public abstract class SeqLanObjWriterTarget {
   public static SeqLanObjWriterTarget wrap(OutputStream target) {

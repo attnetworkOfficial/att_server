@@ -1,14 +1,11 @@
 package org.attnetwork.proto.sl;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import org.attnetwork.exception.AException;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 import org.bouncycastle.util.encoders.Base64;
+
+import java.io.*;
+import java.nio.ByteBuffer;
 
 public abstract class AbstractSeqLanObject {
   private int dataLengthLen;

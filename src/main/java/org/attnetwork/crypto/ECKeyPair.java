@@ -1,8 +1,9 @@
 package org.attnetwork.crypto;
 
-import java.security.KeyPair;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
+
+import java.security.KeyPair;
 
 public class ECKeyPair {
   private BCECPrivateKey privateKey;

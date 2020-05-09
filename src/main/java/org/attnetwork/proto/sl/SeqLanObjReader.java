@@ -1,5 +1,11 @@
 package org.attnetwork.proto.sl;
 
+import org.attnetwork.exception.AException;
+import org.attnetwork.utils.BitmapFlags;
+import org.attnetwork.utils.ReflectUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
@@ -11,11 +17,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.attnetwork.exception.AException;
-import org.attnetwork.utils.BitmapFlags;
-import org.attnetwork.utils.ReflectUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @SuppressWarnings({"unchecked", "ConstantConditions"})
 class SeqLanObjReader {

@@ -1,9 +1,5 @@
 package org.attnetwork.server.component.l2.impl;
 
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import org.attnetwork.crypto.asymmetric.AsmPublicKey;
 import org.attnetwork.crypto.asymmetric.AsmPublicKeyChain;
 import org.attnetwork.exception.AException;
@@ -16,6 +12,11 @@ import org.attnetwork.server.component.MessageOnion;
 import org.attnetwork.server.component.l2.SessionServiceL2;
 import org.attnetwork.server.component.l2.obj.AtTnSession;
 import org.springframework.stereotype.Service;
+
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class SessionServiceL2Impl implements SessionServiceL2 {
@@ -50,11 +51,10 @@ public class SessionServiceL2Impl implements SessionServiceL2 {
     return getSession(encryptedMsg.sessionId).decrypt(encryptedMsg);
   }
 
-//  @Override
+  //  @Override
   public void checkWebSocketSession() {
 
   }
-
 
 
   private AtTnSession getSession(Integer id) {

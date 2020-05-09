@@ -1,8 +1,9 @@
 package org.attnetwork.server.component;
 
-import java.util.HashSet;
 import org.attnetwork.utils.HashUtil;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
+
+import java.util.HashSet;
 
 public class MessageType {
   public static final String __DEBUG__ = "0";

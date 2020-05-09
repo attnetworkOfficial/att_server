@@ -1,6 +1,5 @@
 package org.attnetwork.server.component.l2.obj;
 
-import java.security.SecureRandom;
 import org.attnetwork.crypto.AesCrypto;
 import org.attnetwork.crypto.asymmetric.AsmPublicKeyChain;
 import org.attnetwork.exception.AException;
@@ -11,6 +10,8 @@ import org.attnetwork.proto.msg.wrapper.AtTnEncryptedMsg;
 import org.attnetwork.proto.msg.wrapper.AtTnOriginMsg;
 import org.attnetwork.proto.sl.SeqLan;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
+
+import java.security.SecureRandom;
 
 public class AtTnSession {
   private static final SecureRandom secureRandom = new SecureRandom();

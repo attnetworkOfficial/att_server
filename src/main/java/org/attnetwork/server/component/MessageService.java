@@ -1,11 +1,12 @@
 package org.attnetwork.server.component;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 import org.attnetwork.proto.sl.SeqLanObjReaderSource;
 import org.attnetwork.proto.sl.SeqLanObjWriterTarget;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public interface MessageService {
   default void process(InputStream source, OutputStream os) {

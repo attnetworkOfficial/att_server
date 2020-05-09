@@ -1,10 +1,5 @@
 package org.attnetwork.server.component;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
 import org.attnetwork.crypto.asymmetric.AsmPublicKeyChain;
 import org.attnetwork.exception.AException;
 import org.attnetwork.proto.msg.wrapper.TypedMsg;
@@ -13,6 +8,11 @@ import org.attnetwork.proto.msg.wrapper.WrappedMsg;
 import org.attnetwork.proto.sl.AbstractSeqLanObject;
 import org.attnetwork.proto.sl.SeqLanObjReaderSource;
 import org.attnetwork.proto.sl.SeqLanObjWriterTarget;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MessageOnion {
   private TypedMsg typedMsg;

@@ -26,7 +26,7 @@ public enum WrapType {
       } else {
         throw new RuntimeException(
             "duplicated code " + BigInteger.valueOf(op0.code).toString(16) +
-            " for operation " + op + " & " + op0);
+                " for operation " + op + " & " + op0);
       }
     }
   }

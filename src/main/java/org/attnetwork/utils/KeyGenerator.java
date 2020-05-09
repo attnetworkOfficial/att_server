@@ -1,11 +1,12 @@
 package org.attnetwork.utils;
 
-import java.util.Scanner;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.attnetwork.crypto.ECCrypto;
 import org.attnetwork.crypto.asymmetric.AsmKeyPair;
 import org.attnetwork.crypto.asymmetric.AsmPublicKey;
+
+import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class KeyGenerator {
   public static void main(String[] args) {
@@ -61,6 +62,6 @@ public class KeyGenerator {
     }
     System.out.println(keyPair.publicKeyChain);
     System.out.println("\n┌────────────── base64 format keyPair \uD83D\uDD10 ──────────────\n\n" + keyPair.toBase64String() +
-                       "\n\n└──────────────────────────────────────────────────────");
+        "\n\n└──────────────────────────────────────────────────────");
   }
 }
