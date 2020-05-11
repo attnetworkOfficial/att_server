@@ -63,9 +63,9 @@ class SeqLanObjWriter {
         }
         break;
       case MAP:
-        for (Object o : ((Map) value).entrySet()) {
-          SeqLan.writeLengthData(cache, toByteArray(((Map.Entry) o).getKey()));
-          SeqLan.writeLengthData(cache, toByteArray(((Map.Entry) o).getValue()));
+        for (Object o : ((Map<?, ?>) value).entrySet()) {
+          SeqLan.writeLengthData(cache, toByteArray(((Map.Entry<?, ?>) o).getKey()));
+          SeqLan.writeLengthData(cache, toByteArray(((Map.Entry<?, ?>) o).getValue()));
         }
         break;
       default:

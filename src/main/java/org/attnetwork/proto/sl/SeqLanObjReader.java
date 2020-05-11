@@ -69,9 +69,9 @@ class SeqLanObjReader {
     SeqLanDataType fieldType = SeqLanDataType.getTypeType(type);
     switch (fieldType) {
       case OBJECT:
-        return readMessage((Class) type);
+        return readMessage((Class<?>) type);
       case ARRAY: // unknown array nextDataLength, read as list first
-        Class componentType = ((Class) type).getComponentType();
+        Class<?> componentType = ((Class<?>) type).getComponentType();
         return ReflectUtil.listToArray(readList(null, componentType), componentType);
       case GENERIC_ARRAY:
         Type genericComponentType = ((GenericArrayType) type).getGenericComponentType();
@@ -99,11 +99,11 @@ class SeqLanObjReader {
     }
   }
 
-  private Class getParameterizedTypeClass(Type type) {
-    return (Class) ((ParameterizedType) type).getRawType();
+  private Class<?> getParameterizedTypeClass(Type type) {
+    return (Class<?>) ((ParameterizedType) type).getRawType();
   }
 
-  private Object readMessage(Class type) throws Exception {
+  private Object readMessage(Class<?> type) throws Exception {
     Field[] fields = type.getFields();
     Object msg = type.newInstance();
     for (Field field : fields) {
@@ -115,18 +115,18 @@ class SeqLanObjReader {
     return msg;
   }
 
-  private List readList(Type type) throws Exception {
+  private List<?> readList(Type type) throws Exception {
     return readList(type, ReflectUtil.getGenericTypes(type)[0]);
   }
 
-  private List readList(Type type, Type elementType) throws Exception {
+  private List<?> readList(Type type, Type elementType) throws Exception {
     List list;
     if (type == null) {
-      list = new ArrayList();
+      list = ArrayList.class.newInstance();
     } else {
-      Class listType = getParameterizedTypeClass(type);
+      Class<?> listType = getParameterizedTypeClass(type);
       list = listType.getName().equals("java.util.List")
-          ? new ArrayList() : (List) listType.newInstance();
+          ? ArrayList.class.newInstance() : (List<?>) listType.newInstance();
     }
     int end = index + nextDataLength;
     while (end > index) {
@@ -136,9 +136,9 @@ class SeqLanObjReader {
   }
 
   private Object readMap(Type type) throws Exception {
-    Class mapType = getParameterizedTypeClass(type);
+    Class<?> mapType = getParameterizedTypeClass(type);
     Map map = mapType.getName().equals("java.util.Map")
-        ? new HashMap() : (Map) mapType.newInstance();
+        ? HashMap.class.newInstance() : (Map) mapType.newInstance();
     Type[] genericTypes = ReflectUtil.getGenericTypes(type);
     int end = index + nextDataLength;
     while (end > index) {

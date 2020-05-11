@@ -57,4 +57,8 @@ public class AesCrypto {
   public int getBlockSize() {
     return cipher.getBlockSize();
   }
+
+  public String getAlgorithm() {
+    return algorithm;
+  }
 }

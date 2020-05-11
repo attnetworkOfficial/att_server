@@ -30,7 +30,7 @@ public class KeyGenerator {
         Pattern p = Pattern.compile("^(\\d+) *(\\w*)$");
         Matcher m = p.matcher(input);
         if (m.find()) {
-          Long valid = Long.valueOf(m.group(1)) * 1000L;
+          long valid = Long.parseLong(m.group(1)) * 1000L;
           switch (m.group(2)) {
             case "min":
             case "m":
@@ -52,7 +52,7 @@ public class KeyGenerator {
               System.err.println("unit is not correct: " + m.group(2));
               continue;
           }
-          Long now = System.currentTimeMillis();
+          long now = System.currentTimeMillis();
           keyPair = ecc.generateSubKey(superKeyPair, AsmPublicKey.preGen().start(now).end(now + valid));
           break;
         } else {

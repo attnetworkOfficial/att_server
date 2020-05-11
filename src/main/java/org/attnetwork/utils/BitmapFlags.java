@@ -6,18 +6,18 @@ import java.util.List;
 
 public class BitmapFlags<E extends Enum<E>> {
   private byte[] flags;
-  private Class<E> enumType;
+  private final Class<E> enumType;
 
 
-  public static <T extends Enum<T>> BitmapFlags<T> create(Class<T> enumType, T... flags) {
-    BitmapFlags<T> bf = load(enumType, null);
-    for (T ordinal : flags) {
+  public static <E extends Enum<E>> BitmapFlags<E> create(Class<E> enumType, E... flags) {
+    BitmapFlags<E> bf = load(enumType, null);
+    for (E ordinal : flags) {
       bf.set(ordinal, true);
     }
     return bf;
   }
 
-  public static <T extends Enum<T>> BitmapFlags<T> load(Class<T> enumType, byte[] flags) {
+  public static <E extends Enum<E>> BitmapFlags<E> load(Class<E> enumType, byte[] flags) {
     return new BitmapFlags<>(enumType, flags);
   }
 

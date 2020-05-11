@@ -6,8 +6,8 @@ import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
 import java.security.KeyPair;
 
 public class ECKeyPair {
-  private BCECPrivateKey privateKey;
-  private BCECPublicKey publicKey;
+  private final BCECPrivateKey privateKey;
+  private final BCECPublicKey publicKey;
 
   ECKeyPair(KeyPair keyPair) {
     this((BCECPrivateKey) keyPair.getPrivate(), (BCECPublicKey) keyPair.getPublic());

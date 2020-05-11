@@ -159,7 +159,7 @@ public class ECCrypto implements EncryptAsymmetric {
     BigInteger e = new BigInteger(1, data);
     for (int i = 0; i < 4; i++) {
       ECPoint k = recoverPublicKey(i, sign, e);
-      if (k != null && Arrays.equals(k.getEncoded(true), encoded)) {
+      if (Arrays.equals(k.getEncoded(true), encoded)) {
         return i;
       }
     }

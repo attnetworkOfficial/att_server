@@ -89,7 +89,7 @@ public class MessageServiceImpl implements MessageService {
       errorMsg.msg = e.getMessage();
       MessageOnion.sow("resp.error", errorMsg).harvest(target);
     } catch (IOException ioE) {
-      log.error("write outputStream error!", ioE.getMessage());
+      log.error("write outputStream error, {}", ioE.getMessage());
     }
   }
 
