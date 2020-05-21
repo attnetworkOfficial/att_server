@@ -18,8 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 
 class ECCryptoTest {
-  private Logger log = LoggerFactory.getLogger(getClass());
-  private ECCrypto ecc = ECCrypto.instance();
+  private final Logger log = LoggerFactory.getLogger(getClass());
+  private final ECCrypto ecc = ECCrypto.instance();
 
   @Test
   void testGeneratePrivateKey() {
@@ -120,7 +120,7 @@ class ECCryptoTest {
   void testKeyChain() {
     AsmKeyPair rootKeyPair = ecc.generateRootKey();
     byte[] rootPublicKey = rootKeyPair.publicKeyChain.key.data;
-    Long now = System.currentTimeMillis();
+    long now = System.currentTimeMillis();
 
     AsmKeyPair l2KeyPair = ecc.generateSubKey(rootKeyPair, AsmPublicKey.preGen().start(now).end(now + 10_000L));
     AsmPublicKeyChain.Validation validation = l2KeyPair.publicKeyChain.isValid(rootPublicKey, ecc);

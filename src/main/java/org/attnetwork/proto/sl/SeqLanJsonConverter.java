@@ -12,7 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SeqLanJsonConverter {
-  private static JsonFactory jsonFactory = new JsonFactory();
+  private static final JsonFactory jsonFactory = new JsonFactory();
 
   static {
     jsonFactory.enable(JsonParser.Feature.ALLOW_COMMENTS);

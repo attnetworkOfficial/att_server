@@ -53,7 +53,7 @@ public enum SeqLanDataType {
 
   public static SeqLanDataType getTypeType(Type type) {
     if (type instanceof Class) {
-      return getClassType((Class) type);
+      return getClassType((Class<?>) type);
     } else {
       if (type instanceof ParameterizedType) {
         ParameterizedType parameterizedType = (ParameterizedType) type;
@@ -65,7 +65,7 @@ public enum SeqLanDataType {
     return UNKNOWN;
   }
 
-  public static SeqLanDataType getClassType(Class clazz) {
+  public static SeqLanDataType getClassType(Class<?> clazz) {
     if (AbstractSeqLanObject.class.isAssignableFrom(clazz)) {
       return OBJECT;
     } else if (List.class.isAssignableFrom(clazz)) {
