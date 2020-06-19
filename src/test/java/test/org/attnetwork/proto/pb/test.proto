@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package tutorial;
+
+option java_package = "test.org.attnetwork.proto.pb.msg";
+option java_outer_classname = "ProtocolBufferTest";
+
+message ExampleUserMsg {
+  int64 id = 1;
+  string firstName = 2;
+  string lastName = 3;
+  float score = 4;
+  string phone = 5;
+  repeated ExampleUserContactMsg contacts = 6;
+}
+
+message ExampleUserContactMsg {
+  int64 id = 1;
+  string remark = 2;
+}

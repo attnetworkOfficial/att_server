@@ -14,9 +14,9 @@ import org.attnetwork.proto.sl.AbstractSeqLanObject;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.Assert;
-import test.org.attnewtork.proto.msg.ComplicatedMsg;
-import test.org.attnewtork.proto.msg.ExampleUserContactMsg;
-import test.org.attnewtork.proto.msg.ExampleUserMsg;
+import test.org.attnetwork.proto.sl.msg.ComplicatedMsg;
+import test.org.attnetwork.proto.sl.msg.ExampleUserContactMsg;
+import test.org.attnetwork.proto.sl.msg.ExampleUserMsg;
 
 class TestSeqLan {
 
@@ -99,7 +99,3 @@ class TestSeqLan {
                   "rawA should equals rawB\nA: " + ByteUtils.toHexString(rawA) + "\nB: " + ByteUtils.toHexString(rawB));
   }
 }
-
-// 4107276f3adf74da48044a6f686e05536d697468 050102023220 0c3430302d3232322d353535351a0e08008d76253ac3e13704626f73730a0800a1503b6abf6fc500
-// 4007276f3adf74da48044a6f686e05536d697468 0402322002   0c3430302d3232322d353535351a0e08008d76253ac3e13704626f73730a0800a1503b6abf6fc500
-// 4107276f3adf74da48044a6f686e05536d697468 05023220020c 0c3430302d3232322d353535351a0e08008d76253ac3e13704626f73730a0800a1503b6abf6fc500

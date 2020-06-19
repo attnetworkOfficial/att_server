@@ -1,4 +1,4 @@
-package test.org.attnewtork.proto.msg;
+package test.org.attnetwork.proto.sl.msg;
 
 import org.attnetwork.proto.sl.AbstractSeqLanObject;
 
