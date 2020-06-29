@@ -154,6 +154,9 @@ class SeqLanObjReader {
   }
 
   private BigInteger readBigInteger() throws IOException {
+    if (nextDataLength == 0) {
+      return BigInteger.ZERO;
+    }
     readDataIntoCache();
     byte[] bytes = new byte[nextDataLength];
     System.arraycopy(cache, 0, bytes, 0, nextDataLength);

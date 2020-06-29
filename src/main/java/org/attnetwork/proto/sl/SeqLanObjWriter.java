@@ -78,7 +78,8 @@ class SeqLanObjWriter {
     ByteArrayOutputStream cache = new ByteArrayOutputStream();
     int scale = value.stripTrailingZeros().scale();
     SeqLan.writeLengthData(cache, (scale == 0 ? value : value.movePointRight(scale)).toBigInteger().toByteArray());
-    cache.write(BigInteger.valueOf(scale).toByteArray());
+    if (scale != 0)
+      cache.write(BigInteger.valueOf(scale).toByteArray());
     return cache.toByteArray();
   }
 }
