@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package tutorial;
+
+option java_package = "org.attnetwork.proto.pb.msg";
+option java_outer_classname = "ProtocolBufferDto";
+
+message ErrorMsg {
+  string code = 1;
+  string msg = 2;
+}
+
+message PingMsg {
+  string msg = 1;
+}
+
+message SessionStartMsg {
+  string attnVersion = 1;
+  bytes random = 2;
+}
+
+message SessionStartMsgResp {
+  string version = 1;
+  int32 sessionId = 2;
+  bytes random = 3;
+  bytes salt = 4;
+}
+
+// wrapper
+
+message AtTnEncryptedMsg {
+  int32 sessionId = 1;
+  bytes msgKey = 2;
+  bytes data = 3;
+}
+
+message AtTnOriginMsg {
+  bytes data = 1; // typed message
+  bytes salt = 2;
+  int64 timestamp = 3;
+  bytes padding = 4;
+}
+
+message SignedMsg {
+  AsmSignature sign = 1;
+  AsmPublicKeyChain publicKeyChain = 2;
+  bytes data = 3;
+}
+
+message TypedMsg {
+  string type = 1;
+  bytes data = 2;
+}
+
+message WrappedMsg {
+  int32 wrapType = 1;
+  bytes data = 2;
+}
+
+
+// others
+message AsmSignature {
+  string algorithm = 1;
+  bytes sign = 2;
+}
+
+message AsmPublicKeyChain {
+  AsmPublicKey key = 1;
+  AsmSignature sign = 2;
+  AsmPublicKeyChain superKey = 3;
+}
+
+message AsmPublicKey {
+  string algorithm = 1;
+  int64 startTimestamp = 2;
+  int64 endTimestamp = 3;
+  int64 createTimestamp = 4;
+  string proof = 5;
+  string desc = 6;
+  bytes data = 7;
+}
