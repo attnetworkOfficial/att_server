@@ -15,6 +15,7 @@ import org.attnetwork.server.component.MessageService;
 import org.attnetwork.server.component.MessageType;
 import org.attnetwork.server.component.l2.EncryptServiceL2;
 import org.attnetwork.server.component.l2.SessionServiceL2;
+import org.attnetwork.server.component.l2.UserServiceL2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,12 +31,14 @@ public class MessageServiceImpl implements MessageService {
 
   private final SessionServiceL2 sessionService;
   private final EncryptServiceL2 encryptService;
+  private final UserServiceL2 userServiceL2;
   private final Logger log = LoggerFactory.getLogger(getClass());
 
   @Autowired
-  public MessageServiceImpl(SessionServiceL2 sessionService, EncryptServiceL2 encryptService) {
+  public MessageServiceImpl(SessionServiceL2 sessionService, EncryptServiceL2 encryptService, UserServiceL2 userServiceL2) {
     this.sessionService = sessionService;
     this.encryptService = encryptService;
+    this.userServiceL2 = userServiceL2;
   }
 
   @Override
@@ -72,6 +75,7 @@ public class MessageServiceImpl implements MessageService {
 
   private void startSession(MessageOnion onion) {
     onion.checkWrapTypes(WrapType.L_SIGN_ENCRYPT);
+    userServiceL2.validUserCheck(onion.getSigner());
     onion.revive(sessionService.startSession(onion));
     onion.setWrapTypes(WrapType.L_ENCRYPT_SIGN);
   }
