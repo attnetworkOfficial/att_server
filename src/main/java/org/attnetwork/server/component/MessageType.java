@@ -10,6 +10,8 @@ public class MessageType {
 
   public static final String START_SESSION = "010d92";
   public static final String PING = "a73aab";
+  public static final String QUERY_CHATS = "06a652";
+  public static final String QUERY_CONTACTS = "aa2cfd";
 
 
   public static void main(String[] args) {
@@ -18,9 +20,12 @@ public class MessageType {
     for (String name : new String[]{
         "start_session",
         "ping",
+        // chat server
+        "query_chats",
+        "query_contacts",
     }) {
       String code = convert(name, checker, len);
-      System.out.println(code + " " + name);
+      System.out.println("public static final String " + name.toUpperCase() + " = \"" + code + "\";");
     }
   }
 
@@ -28,7 +33,7 @@ public class MessageType {
     String code = ByteUtils.toHexString(HashUtil.SHA3_256.hash(name.getBytes())).substring(0, len);
     boolean add = checker.add(code);
     if (!add) {
-      throw new RuntimeException("duplicated method code: " + name);
+      throw new RuntimeException("duplicated method: " + name + "|" + code);
     }
     return code;
   }

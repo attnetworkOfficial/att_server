@@ -57,6 +57,8 @@ public class MessageServiceImpl implements MessageService {
         case MessageType.PING:
           target.write(new byte[]{0});
           return;
+        case MessageType.QUERY_CHATS:
+          break;
         case "null":
         default:
           throw new AException("unsupported message type: " + msgType);
