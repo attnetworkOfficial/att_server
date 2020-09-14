@@ -1,5 +1,7 @@
 package org.attnetwork.proto.sl;
 
+import org.attnetwork.utils.BitmapFlags;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -23,6 +25,8 @@ class SeqLanObjWriter {
         return multiToByteArray(value);
       case RAW:
         return (byte[]) value;
+      case BITMAP_FLAGS:
+        return ((BitmapFlags) value).getFlags();
       case INTEGER:
         return BigInteger.valueOf((Integer) value).toByteArray();
       case LONG:

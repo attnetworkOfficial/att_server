@@ -11,10 +11,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import org.attnetwork.proto.sl.AbstractSeqLanObject;
+import org.attnetwork.utils.BitmapFlags;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.Assert;
 import test.org.attnetwork.proto.sl.msg.ComplicatedMsg;
+import test.org.attnetwork.proto.sl.msg.ExampleChatMsg;
 import test.org.attnetwork.proto.sl.msg.ExampleUserContactMsg;
 import test.org.attnetwork.proto.sl.msg.ExampleUserMsg;
 
@@ -97,5 +99,27 @@ class TestSeqLan {
 
     Assert.isTrue(ByteUtils.equals(rawA, rawB),
                   "rawA should equals rawB\nA: " + ByteUtils.toHexString(rawA) + "\nB: " + ByteUtils.toHexString(rawB));
+  }
+
+  @Test
+  void testExampleChatMsg() throws IOException {
+    ExampleChatMsg chat = new ExampleChatMsg();
+    chat.id = 1;
+    chat.flags = BitmapFlags.create(ExampleChatMsg.Flags.class, ExampleChatMsg.Flags.IS_CREATOR);
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    chat.write(os);
+    byte[] rawA = os.toByteArray();
+
+    ExampleChatMsg chatB = AbstractSeqLanObject.read(new ByteArrayInputStream(rawA), ExampleChatMsg.class);
+    Assert.isTrue(chatB.flags.has(ExampleChatMsg.Flags.IS_CREATOR), "chatB should return is_creator");
+    Assert.isTrue(!chatB.flags.has(ExampleChatMsg.Flags.IS_KICKED), "chatB should not return is_kicked");
+
+    os = new ByteArrayOutputStream();
+    chatB.write(os);
+    byte[] rawB = os.toByteArray();
+
+    Assert.isTrue(ByteUtils.equals(rawA, rawB),
+        "rawA should equals rawB\nA: " + ByteUtils.toHexString(rawA) + "\nB: " + ByteUtils.toHexString(rawB));
+
   }
 }
