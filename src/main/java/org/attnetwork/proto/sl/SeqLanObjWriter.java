@@ -26,7 +26,7 @@ class SeqLanObjWriter {
       case RAW:
         return (byte[]) value;
       case BITMAP_FLAGS:
-        return ((BitmapFlags) value).getFlags();
+        return ((BitmapFlags<?>) value).getFlags();
       case INTEGER:
         return BigInteger.valueOf((Integer) value).toByteArray();
       case LONG:
