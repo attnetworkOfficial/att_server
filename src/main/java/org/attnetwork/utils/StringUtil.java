@@ -1,5 +1,11 @@
 package org.attnetwork.utils;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -11,6 +17,26 @@ public class StringUtil {
   private static final Pattern SNAKE_CASE_PATTERN = Pattern.compile("_([a-zA-Z])");
   private static final Pattern CAMEL_CASE_PATTERN = Pattern.compile("([A-Z])");
   private static final Pattern JSON_KEY_PATTERN = Pattern.compile("(\"\\w+\" *:)");
+
+  private static final ObjectMapper mapper = new ObjectMapper()
+      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+      .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+  public static <T> String writeValueAsJsonString(T value) {
+    try {
+      return mapper.writeValueAsString(value);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static <T> T readJsonStringAsValue(String str, Class<T> type) {
+    try {
+      return mapper.readValue(str == null ? "{}" : str, type);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   public static boolean containsIgnoreCase(String source, String contains) {
     return Pattern.compile(Pattern.quote(contains), Pattern.CASE_INSENSITIVE)
