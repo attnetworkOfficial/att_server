@@ -1,6 +1,6 @@
 package org.attnetwork.server.component;
 
-public interface NeuralNetwork {
+public interface NeuralNetworkSystem {
   void join();
 
   void leave();
@@ -8,4 +8,8 @@ public interface NeuralNetwork {
   void vote();
 
   void split();
+
+  class Admin {}
+
+  class Node {}
 }
