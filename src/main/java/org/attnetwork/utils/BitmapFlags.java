@@ -9,12 +9,17 @@ public class BitmapFlags<E extends Enum<E>> {
   private final Class<E> enumType;
 
 
-  public static <E extends Enum<E>> BitmapFlags<E> create(Class<E> enumType, E... flags) {
-    BitmapFlags<E> bf = load(enumType, null);
+  @SafeVarargs
+  public static <E extends Enum<E>> BitmapFlags<E> create(E... flags) {
+    BitmapFlags<E> bf = create(flags[0].getDeclaringClass());
     for (E ordinal : flags) {
       bf.set(ordinal, true);
     }
     return bf;
+  }
+
+  public static <E extends Enum<E>> BitmapFlags<E> create(Class<E> enumType) {
+    return load(enumType, null);
   }
 
   public static <E extends Enum<E>> BitmapFlags<E> load(Class<E> enumType, byte[] flags) {

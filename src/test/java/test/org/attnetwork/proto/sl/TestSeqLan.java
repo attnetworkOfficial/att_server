@@ -105,7 +105,7 @@ class TestSeqLan {
   void testExampleChatMsg() throws IOException {
     ExampleChatMsg chat = new ExampleChatMsg();
     chat.id = 1;
-    chat.flags = BitmapFlags.create(ExampleChatMsg.Flags.class, ExampleChatMsg.Flags.IS_CREATOR);
+    chat.flags = BitmapFlags.create(ExampleChatMsg.Flags.IS_CREATOR);
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     chat.write(os);
     byte[] rawA = os.toByteArray();

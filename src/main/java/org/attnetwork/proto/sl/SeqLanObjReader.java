@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings({"unchecked", "ConstantConditions"})
+@SuppressWarnings({"unchecked", "ConstantConditions", "rawtypes"})
 class SeqLanObjReader {
   private static final Logger log = LoggerFactory.getLogger(SeqLanObjReader.class);
 
