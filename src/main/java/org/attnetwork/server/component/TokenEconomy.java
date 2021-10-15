@@ -7,5 +7,7 @@ public interface TokenEconomy {
 
   void claim();
 
-  void vote();
+  int proposal();
+
+  void vote(int proposalId, boolean isApprove);
 }
