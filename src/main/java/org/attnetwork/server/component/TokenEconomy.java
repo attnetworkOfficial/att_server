@@ -10,4 +10,6 @@ public interface TokenEconomy {
   int proposal();
 
   void vote(int proposalId, boolean isApprove);
+
+  void transfer();
 }
