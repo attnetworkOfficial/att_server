@@ -1,15 +1,15 @@
 package org.attnetwork.server.component;
 
 public interface TokenEconomy {
-  void stake();
+  void stake(int amount);
 
-  void unstake();
+  void unstake(int amount);
 
   void claim();
 
-  int proposal();
+  int proposal(String content);
 
   void vote(int proposalId, boolean isApprove);
 
-  void transfer();
+  void transfer(int amount);
 }
