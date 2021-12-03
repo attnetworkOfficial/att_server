@@ -3,9 +3,16 @@ package org.attnetwork.server.component;
 import java.util.List;
 
 public interface Proposal {
-  String method();
+  String summary();
 
-  List<Object> args();
+  String URL();
 
-  String content();
+  String proposer();
+
+  Type type();
+
+  List<Object> parameters();
+
+  enum Type {
+  }
 }
